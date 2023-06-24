@@ -1,0 +1,90 @@
+                                    /* Default Page Components */
+html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    background-color: rgb(54, 54, 54);
+}
+
+button {
+    cursor: pointer;
+}
+                                    /* UI Components */
+#ui {
+    width: 100%;
+    height: 100%;
+}
+                                    /* Text Box Components */
+#textBox {
+    width: 50%;
+    height: 50%;
+    position: relative;
+    margin: auto;
+
+    background-color: black;
+}
+
+#text {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+
+    margin: 0% 5% 5% 5%;
+    color: white;
+}
+                                    /* Picture Box Components */
+#pictureBox {
+    width: 50%;
+    height: 20%;
+    position: relative;
+    margin: auto;
+
+    background-color: grey;
+}
+
+#pictures {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+                                    /* Name Entry Components */
+#nameEntry {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+label[for=name] {
+    margin:auto;
+    display: block;
+    text-align: center;
+    font-family: "Courier";
+    font-size: 3vh;
+}
+
+input[type=text] {
+    width: 60%;
+    height: 30%;
+    margin: auto;
+    display: block;
+    text-align: center;
+
+    font-family: "Courier";
+    font-size: 4vh;
+    background-color: white;
+}
+
+#nameEntry button {
+    width: 40%;
+    height: 20%;
+    margin: auto;
+    display: block;
+    font-family: "Courier";
+    font-size: 3vh;
+}
+
