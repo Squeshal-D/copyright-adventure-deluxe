@@ -13,11 +13,6 @@ body {
 button {
     cursor: pointer;
 }
-                                    /* UI Components */
-#ui {
-    width: 100%;
-    height: 100%;
-}
                                     /* Text Box Components */
 #textBox {
     width: 50%;
