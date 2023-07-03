@@ -17,6 +17,10 @@ body {
 button {
     cursor: pointer;
 }
+                                    /* Options Box Components */
+#restart {
+    position: absolute
+}
                                     /* Text Box Components */
 #textBox {
     width: 50%;
