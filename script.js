@@ -131,6 +131,10 @@ function askForNameAndDescription() {
 }
 
 function areaSelect() {
+    if (fightPool.length > 0) {
+        
+    }
+
     timeouts.push(setTimeout(function() {typeText(fightPool[0].name)}, typeText(party[0].name)));
 }
                                         // Main Functions

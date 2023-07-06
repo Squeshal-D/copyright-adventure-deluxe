@@ -93,6 +93,10 @@ input.nameEntry {
     background-color: white;
 }
 
+#nameEntryContainer {
+
+}
+
 button.nameEntry {
     width: 40%;
     height: 20%;
@@ -101,3 +105,16 @@ button.nameEntry {
     font-size: 3vmin;
 }
 
+#areaSelectButtonContainer {
+    width: 100%;
+    height: 100%;
+    top: 30%;
+    position: absolute;
+    text-align: center;
+}
+
+button.areaSelect {
+    width: 30%;
+    height: 40%;
+    display: inline-block;
+}
