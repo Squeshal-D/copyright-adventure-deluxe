@@ -1,4 +1,4 @@
-var textSpeed = 40;
+var textSpeed = 5;
 var playerName = "";
 var playerDesc = "";
 var typing = false;
@@ -35,6 +35,8 @@ function setStartConditions() {
     addAllEnemiesToPool();
     clearTextBox();
     displayNameEntry(false);
+    displayContinueButton(false);
+    displayAreaSelection([]);
 }
 
 function setOptionButtonFunctions() {
@@ -48,7 +50,11 @@ function addAllEnemiesToPool() {
     const blartEntrance = "Many of the people in the mall don't seem to be positively responding to you trying to pick a fight."
     + " It's no wonder you've been reported. Then you see him. \"I swore an oath to protect this mall.\"";
     const Blart = new Character("Paul Blart", "Mall Cop", "Take a trip to the mall.", blartEntrance, 80);
-    fightPool.push(Blart);
+    fightPool.push(Blart, Blart);
+}
+
+function removeEnemyFromPool(enemy) {
+    fightPool.splice(fightPool.indexOf(enemy), 1);
 }
                                         // UI Functions
 function clearTextBox() {
@@ -58,12 +64,37 @@ function clearTextBox() {
 }
 
 function displayNameEntry(display) {
-    if (display) {
-        $(".nameEntry").css("display", "block");
+    if (display) $("#nameEntryContainer").css("display", "block");
+    else $("#nameEntryContainer").css("display", "none");
+}
+
+function displayContinueButton(display) {
+    if (display) $("#continueButtonContainer").css("display", "block");
+    else $("#continueButtonContainer").css("display", "none");
+}
+
+// To hide area selection buttons, call this with an empty array as parameter
+function displayAreaSelection(pickedFights) {
+    console.log(pickedFights);
+    if (pickedFights.length < 1) {
+        $("#areaSelectButtonContainer").css("display", "none");
+        return;
     }
-    else {
-        $(".nameEntry").css("display", "none");
+
+    let areaSelectButtons = [document.querySelector("#areaButton1"), document.querySelector("#areaButton2"), document.querySelector("#areaButton3")];
+    for (let i = 0; i < 3; i++) {
+        $(`#areaButton${i + 1}`).css("display", "none");
     }
+    for (let i = 0; i < pickedFights.length && i < 3; i++) {
+        areaSelectButtons[i].textContent = pickedFights[i].quest;
+        areaSelectButtons[i].onclick = function() {
+            displayAreaSelection([]);
+            removeEnemyFromPool(pickedFights[i]);
+            enemyEntrance(pickedFights[i]);
+        }
+        $(`#areaButton${i + 1}`).css("display", "inline-block");
+    }
+    $("#areaSelectButtonContainer").css("display", "block");
 }
 
 // This function can be used as a `delay` parameter for setTimeout, to set an action after the message has been typed.
@@ -93,6 +124,14 @@ function getTypeTextTime(message) {
     return messageLengthTime;
 }
                                         // Game Logic Functions
+function selectCharacter(player, enemy) {
+    typeText(party[0].name + " " + enemy.name);
+}
+
+function enemyEntrance(enemy) {
+    timeouts.push(setTimeout(selectCharacter, typeText(enemy.entrance), null, enemy));
+}
+
 function askForNameAndDescription() {
     const inputLabel = document.querySelector("label.nameEntry");
     const nameField = document.querySelector("input.nameEntry");
@@ -101,7 +140,7 @@ function askForNameAndDescription() {
     let welcomePrompt = "Welcome to a game that cannot be monetized without legal repercussions. Please enter your name in the box below.";
     let descPrompt = "Wow, that's really your name? Now, describe yourself in 15 characters or less.";
 
-    inputLabel.value = "Name:";
+    inputLabel.textContent = "Name:";
     nameField.maxLength = "10";
     nameField.value = playerName;
     submitButton.onclick = function() {
@@ -114,7 +153,7 @@ function askForNameAndDescription() {
 
     function askForDescription()
     {
-        inputLabel.value = "Description:";
+        inputLabel.textContent = "Description:";
         nameField.maxLength = "15";
         nameField.value = playerDesc;
         submitButton.onclick = function() {
@@ -131,19 +170,30 @@ function askForNameAndDescription() {
 }
 
 function areaSelect() {
-    if (fightPool.length > 0) {
-        
+    let message = "What an exhilarating battle! You're not done yet, though. There are still opponents to be conquered. Where will you go next?";
+    if (fightPool.length == 1) { // Display different message for if the game has just started.
+        message = "There comes a time in every man's life when they must embark on an epic quest to defeat numerous people."
+        + " Today, " + playerName + " begins their quest. The " + playerDesc + " walks outside their house. They consider their options.";
     }
 
-    timeouts.push(setTimeout(function() {typeText(fightPool[0].name)}, typeText(party[0].name)));
+    if (fightPool.length > 0) {
+        let potentialFights = fightPool.slice();
+        let pickedFights = [];
+        for (let i = 0; i < 3 && potentialFights.length > 0; i++) {
+            let randInt = Math.floor(Math.random()*potentialFights.length);
+            pickedFights.push(potentialFights[randInt]);
+            potentialFights.splice(randInt, 1);
+        }
+        timeouts.push(setTimeout(displayAreaSelection, typeText(message), pickedFights));
+    }
 }
                                         // Main Functions
 function startNewGame() {
     setStartConditions();
-    setOptionButtonFunctions();
     askForNameAndDescription();
 }
 
 $(function() {
+    setOptionButtonFunctions();
     startNewGame();
 })
