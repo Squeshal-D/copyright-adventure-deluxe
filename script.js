@@ -7,7 +7,7 @@ var timeouts = [];
 var party = [];
 var fightPool = [];
                                         // Characters
-function Character(name, desc, quest, entrance, maxhp) {
+function Character(name, desc, quest, entrance, maxhp, move1name, move1desc, move2name, move2desc) {
     this.name = name;
     this.description = desc;
     this.quest = quest;
@@ -15,11 +15,21 @@ function Character(name, desc, quest, entrance, maxhp) {
     this.maxhp = maxhp;
     this.hp = maxhp;
 
+    this.move1name = move1name;
+    this.move1desc = move1desc;
+    this.move2name = move2name;
+    this.move2desc = move2desc;
+
     function changehp(damage) {
         this.hp += damage;
         if (this.hp > this.maxhp) this.hp = this.maxhp;
         else if (this.hp < 0) this.hp = 0;
     }
+}
+
+function Blart() {
+    Character.call(this);
+    
 }
                                         // Utility Functions
 function clearAllTimeouts() {
@@ -37,6 +47,7 @@ function setStartConditions() {
     displayNameEntry(false);
     displayContinueButton(false);
     displayAreaSelection([]);
+    hideBattleButtons();
 }
 
 function setOptionButtonFunctions() {
@@ -49,8 +60,10 @@ function addAllEnemiesToPool() {
     fightPool = [];
     const blartEntrance = "Many of the people in the mall don't seem to be positively responding to you trying to pick a fight."
     + " It's no wonder you've been reported. Then you see him. \"I swore an oath to protect this mall.\"";
-    const Blart = new Character("Paul Blart", "Mall Cop", "Take a trip to the mall.", blartEntrance, 80);
-    fightPool.push(Blart, Blart);
+    const Blart = new Character("Paul Blart", "Mall Cop", "Take a trip to the mall.", blartEntrance, 80,
+        "Segway Slam", "An all-out rollout.\nHas a 50% chance to hit (40 dmg), as well as a 50% chance to recoil (20 self dmg).",
+        "Headbutt", "\"Nobody wins with a headbutt.\"\nDeals 25 dmg and recoils 15 self dmg.");
+    fightPool.push(Blart);
 }
 
 function removeEnemyFromPool(enemy) {
@@ -97,6 +110,48 @@ function displayAreaSelection(pickedFights) {
     $("#areaSelectButtonContainer").css("display", "block");
 }
 
+// To have a blank button pad, call this with null as parameter
+function displayBattleButtons(fighter, setButtonFunctions) {
+    buttons = [document.querySelector("#attack1button"), document.querySelector("#attack2button"), document.querySelector("#switch")];
+    labels = [document.querySelector("#attack1label"), document.querySelector("#attack2label"), document.querySelector("#switchLabel")];
+
+    if (fighter == null) {   
+        buttons[0].innerHTML = "";
+        buttons[1].innerHTML = "";
+        labels[0].innerHTML = "";
+        labels[1].innerHTML = "";
+
+        if (setButtonFunctions) {
+            buttons[0].onclick = function() {};
+            buttons[1].onclick = function() {};
+        }
+        
+    }
+    else {
+        buttons[0].innerHTML = fighter.move1name;
+        buttons[1].innerHTML = fighter.move2name;
+        labels[0].innerHTML = fighter.move1desc;
+        labels[1].innerHTML = fighter.move2desc;
+
+        if (setButtonFunctions) {
+            
+        }
+    }
+
+    buttons[2].textContent = "Switch";
+    labels[2].textContent = "Choose a different fighter. The enemy will go first.";
+
+    if (setButtonFunctions) {
+
+    }
+
+    $("#battleButtonContainer").css("display", "grid");
+}
+
+function hideBattleButtons() {
+    $("#battleButtonContainer").css("display", "none");
+}
+
 // This function can be used as a `delay` parameter for setTimeout, to set an action after the message has been typed.
 function typeText(message) {
     typing = true;
@@ -124,12 +179,13 @@ function getTypeTextTime(message) {
     return messageLengthTime;
 }
                                         // Game Logic Functions
-function selectCharacter(player, enemy) {
-    typeText(party[0].name + " " + enemy.name);
+
+function battle(player, enemy) {
+    displayBattleButtons(player, enemy);
 }
 
 function enemyEntrance(enemy) {
-    timeouts.push(setTimeout(selectCharacter, typeText(enemy.entrance), null, enemy));
+    timeouts.push(setTimeout(battle, typeText(enemy.entrance), party[0], enemy));
 }
 
 function askForNameAndDescription() {
@@ -160,7 +216,9 @@ function askForNameAndDescription() {
             if (nameField.value.trim().length != 0) {
                 playerDesc = nameField.value.trim();
                 displayNameEntry(false);
-                party.push(new Character(playerName, playerDesc, "", "", 50));
+                party.push(new Character(playerName, playerDesc, "", "", 50, 
+                    "Punch", "How normal.<br>Does 15-25 damage.",
+                    "Juul", "A sophomore classic.<br>50% chance to trigger a Bowers attack (30 dmg)."));
                 timeouts.push(setTimeout(areaSelect, typeText("Prepare to embark on your epicc quest...")));
             }
         };
