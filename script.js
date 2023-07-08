@@ -7,29 +7,89 @@ var timeouts = [];
 var party = [];
 var fightPool = [];
                                         // Characters
-function Character(name, desc, quest, entrance, maxhp, move1name, move1desc, move2name, move2desc) {
-    this.name = name;
-    this.description = desc;
-    this.quest = quest;
-    this.entrance = entrance;
-    this.maxhp = maxhp;
-    this.hp = maxhp;
+function Character() {
+    this.name = playerName;
+    this.description = playerDesc;
+    this.quest = "";
+    this.entrance = "";
+    this.maxhp = 50;
+    this.hp = 50;
 
-    this.move1name = move1name;
-    this.move1desc = move1desc;
-    this.move2name = move2name;
-    this.move2desc = move2desc;
+    this.move1name = "Punch";
+    this.move1desc = "How normal.<br>Does 15-20 damage.";
+    this.move2name = "Juul";
+    this.move2desc = "A sophomore classic.<br>50% chance to trigger a Bowers attack (30 dmg).";
 
-    function changehp(damage) {
+    this.changehp = function(damage) {
         this.hp += damage;
         if (this.hp > this.maxhp) this.hp = this.maxhp;
         else if (this.hp < 0) this.hp = 0;
+    }
+
+    this.attack1 = function(user, target) {
+        let randInt = 15 + Math.floor(Math.random()* 11);
+        target.changehp(-randInt);
+        console.log(target.hp);
+        return typeText(`${user.name} punches ${target.name} for ${randInt} damage!`);
+    }
+
+    this.attack2 = function(user, target) {
+        let randInt = Math.floor(Math.random() * 2);
+        if (randInt == 1) {
+            target.changehp(-30);
+            return typeText(`Bowers senses the vape and springs out of nowhere! He annihilates ${target.name} for 30 dmg!`);
+        }
+        else {
+            return typeText(`${user.name} vapes undisturbed. ${target.name} is jealous.`);
+        }
     }
 }
 
 function Blart() {
     Character.call(this);
-    
+
+    this.name = "Paul Blart";
+    this.description = "Mall Cop";
+    this.quest = "Take a trip to the mall.";
+    this.entrance = "Many of the people in the mall don't seem to be positively responding to you trying to pick a fight."
+    + " It's no wonder you've been reported. Then you see him. \"I swore an oath to protect this mall.\"";
+    this.maxhp = 80;
+    this.hp = 80;
+
+    this.move1name = "Segway Slam";
+    this.move1desc = "An all-out rollout.\nHas a 50% chance to hit (40 dmg), as well as a 50% chance to recoil (20 self dmg).";
+    this.move2name = "Headbutt";
+    this.move2desc = "\"Nobody wins with a headbutt.\"\nDeals 25 dmg and recoils 15 self dmg.";
+
+    this.attack1 = function(user, target) {
+        let message = "";
+        let hit = Math.floor(Math.random() * 2);
+        let recoil = Math.floor(Math.random() * 2);
+
+        if (hit == 1) {
+            message += `${user.name} slams their Segway into ${target.name} successfully for 40 dmg...`;
+            target.changehp(-40);
+        }
+        else {
+            message += `${user.name} flies past ${target.name} on their Segway...`;
+        }
+
+        if (recoil == 1) {
+            message += `but crashes for 20 dmg!`;
+            user.changehp(-20);
+        }
+        else {
+            message += `and stays on!`;
+        }
+
+        return typeText(message);
+    }
+
+    this.attack2 = function(user, target) {
+        target.changehp(-25);
+        user.changehp(-15);
+        return typeText(`${user.name} headbutts ${target.name} for 25 dmg, but recieves 15 dmg in recoil!`);
+    }
 }
                                         // Utility Functions
 function clearAllTimeouts() {
@@ -58,12 +118,8 @@ function setOptionButtonFunctions() {
 
 function addAllEnemiesToPool() {
     fightPool = [];
-    const blartEntrance = "Many of the people in the mall don't seem to be positively responding to you trying to pick a fight."
-    + " It's no wonder you've been reported. Then you see him. \"I swore an oath to protect this mall.\"";
-    const Blart = new Character("Paul Blart", "Mall Cop", "Take a trip to the mall.", blartEntrance, 80,
-        "Segway Slam", "An all-out rollout.\nHas a 50% chance to hit (40 dmg), as well as a 50% chance to recoil (20 self dmg).",
-        "Headbutt", "\"Nobody wins with a headbutt.\"\nDeals 25 dmg and recoils 15 self dmg.");
-    fightPool.push(Blart);
+    const blart = new Blart();
+    fightPool.push(blart);
 }
 
 function removeEnemyFromPool(enemy) {
@@ -88,7 +144,6 @@ function displayContinueButton(display) {
 
 // To hide area selection buttons, call this with an empty array as parameter
 function displayAreaSelection(pickedFights) {
-    console.log(pickedFights);
     if (pickedFights.length < 1) {
         $("#areaSelectButtonContainer").css("display", "none");
         return;
@@ -111,7 +166,7 @@ function displayAreaSelection(pickedFights) {
 }
 
 // To have a blank button pad, call this with null as parameter
-function displayBattleButtons(fighter, setButtonFunctions) {
+function displayBattleButtons(fighter, enemy, setButtonFunctions) {
     buttons = [document.querySelector("#attack1button"), document.querySelector("#attack2button"), document.querySelector("#switch")];
     labels = [document.querySelector("#attack1label"), document.querySelector("#attack2label"), document.querySelector("#switchLabel")];
 
@@ -134,13 +189,13 @@ function displayBattleButtons(fighter, setButtonFunctions) {
         labels[1].innerHTML = fighter.move2desc;
 
         if (setButtonFunctions) {
-            
+            buttons[0].onclick = function() {fighter.attack1(fighter, enemy)};
+            buttons[1].onclick = function() {fighter.attack2(fighter, enemy)};
         }
     }
 
     buttons[2].textContent = "Switch";
     labels[2].textContent = "Choose a different fighter. The enemy will go first.";
-
     if (setButtonFunctions) {
 
     }
@@ -179,13 +234,21 @@ function getTypeTextTime(message) {
     return messageLengthTime;
 }
                                         // Game Logic Functions
+function chooseCharacter(currentFighter, enemy) {
+    if (currentFighter == null) {
 
-function battle(player, enemy) {
-    displayBattleButtons(player, enemy);
+    }
+    else {
+        
+    }
+}
+
+function playerTurn(player, enemy) {
+    displayBattleButtons(player, enemy, true);
 }
 
 function enemyEntrance(enemy) {
-    timeouts.push(setTimeout(battle, typeText(enemy.entrance), party[0], enemy));
+    timeouts.push(setTimeout(playerTurn, typeText(enemy.entrance), party[0], enemy));
 }
 
 function askForNameAndDescription() {
@@ -216,9 +279,9 @@ function askForNameAndDescription() {
             if (nameField.value.trim().length != 0) {
                 playerDesc = nameField.value.trim();
                 displayNameEntry(false);
-                party.push(new Character(playerName, playerDesc, "", "", 50, 
-                    "Punch", "How normal.<br>Does 15-25 damage.",
-                    "Juul", "A sophomore classic.<br>50% chance to trigger a Bowers attack (30 dmg)."));
+                party.push(new Character());
+                party[0].name = playerName;
+                party[0].description = playerDesc;
                 timeouts.push(setTimeout(areaSelect, typeText("Prepare to embark on your epicc quest...")));
             }
         };
