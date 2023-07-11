@@ -1,22 +1,47 @@
                                     /* Default Page Components */
+* {
+    font-family: 'Courier New', Courier, monospace;
+}
+
 html {
     width: 100%;
     height: 100%;
+    margin: 0;
 }
 
 body {
     width: 100%;
     height: 100%;
     background-color: rgb(54, 54, 54);
+    margin: 0;
 }
 
 button {
     cursor: pointer;
 }
-                                    /* UI Components */
-#ui {
-    width: 100%;
+                                    /* Options Box Components */
+#optionsBox {
+    width: 25%;
+    height: 50%;
+    left: 75%;
+    top: 0;
+    position: absolute;
+    display: block;
+}
+
+#restart {
+    width: 25%;
+    height: 25%;
+    position: absolute;
+}
+                                    /* Party List Components */
+#partyList {
+    width: 25%;
     height: 100%;
+    left: 0;
+    bottom: 0;
+    display: block;
+    position: absolute;
 }
                                     /* Text Box Components */
 #textBox {
@@ -33,13 +58,15 @@ button {
     bottom: 0;
     left: 0;
 
+    font-size: 2vmin;
+
     margin: 0% 5% 5% 5%;
     color: white;
 }
                                     /* Picture Box Components */
 #pictureBox {
     width: 50%;
-    height: 20%;
+    height: 30%;
     position: relative;
     margin: auto;
 
@@ -51,40 +78,112 @@ button {
     height: 100%;
     position: absolute;
 }
+                                    /* Button Box Components */
+#buttonBox {
+    width: 50%;
+    height: 20%;
+    position: relative;
+    margin: auto;
+    bottom: 0;
 
+    background-color: lightgrey;
+}
                                     /* Name Entry Components */
-#nameEntry {
+#nameEntryContainer {
     width: 100%;
     height: 100%;
     position: absolute;
 }
 
-label[for=name] {
-    margin:auto;
+.nameEntry {
+    position: absolute;
     display: block;
     text-align: center;
-    font-family: "Courier";
-    font-size: 3vh;
 }
 
-input[type=text] {
+label.nameEntry {
+    width: 100%;
+    top: 5%;
+    bottom: 0;
+    font-size: 3vmin;
+}
+
+input.nameEntry {
     width: 60%;
     height: 30%;
+    bottom: 35%;
+    left: 20%;
     margin: auto;
-    display: block;
-    text-align: center;
-
-    font-family: "Courier";
-    font-size: 4vh;
+    font-size: 4vmin;
     background-color: white;
 }
 
-#nameEntry button {
+button.nameEntry {
     width: 40%;
     height: 20%;
-    margin: auto;
-    display: block;
-    font-family: "Courier";
-    font-size: 3vh;
+    bottom: 5%;
+    left: 30%;
+    font-size: 3vmin;
+}
+                                    /* Area Select Button Components */
+#areaSelectButtonContainer {
+    width: 100%;
+    height: 80%;
+    top: 20%;
+    position: absolute;
+    text-align: center;
 }
 
+button.areaSelect {
+    width: 30%;
+    height: 50%;
+    display: inline-block;
+}
+                                    /* Battle Button Components */
+#battleButtonContainer {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: grid;
+    grid-template-columns: 25% auto;
+    grid-template-rows: 40% 40% auto;
+}
+
+.attack {
+    border: 1px solid black;
+    font-size: 2vmin;
+}
+
+label.attack {
+    padding: 1%;
+}
+
+#attack1button {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+}
+
+#attack2button {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+}
+
+#switch {
+    grid-column: 1 / 2;
+    grid-row: 3 / -1;
+}
+
+#attack1label {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+}
+
+#attack2label {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+}
+
+#switchLabel {
+    grid-column: 2 / 3;
+    grid-row: 3 / -1;
+}

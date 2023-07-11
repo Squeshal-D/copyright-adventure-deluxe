@@ -9,25 +9,47 @@
         <script src="script.js"></script>
     </head>
     <body>
-        <div id="ui">
+        <div id = "optionsBox">
+            <button type="button" id="restart">Restart</button>
+        </div>
 
-            <div id="textBox">
-                <div id="text">
+        <div id="textBox">
+            <div id="text">
 
-                </div>
             </div>
+        </div>
 
-            <div id="pictureBox">
-                <div id="pictures">
+        <div id="pictureBox">
+            <div id="pictures">
                     
-                </div>
-                <div id="nameEntry">
-                    <label for="name">Name:</label><br>
-                    <input type="text" id="name" name="name" maxlength="10" spellcheck="false"><br>
-                    <button type="button">Enter</button>
-                </div>
+            </div>
+        </div>
+
+        <div id="buttonBox">
+            <div id="nameEntryContainer">
+                <label class="nameEntry"></label><br>
+                <input type="text" class="nameEntry", maxlength="10" spellcheck="false"><br>
+                <button type="button" class="nameEntry">Enter</button>
+            </div>
+            
+            <div id="areaSelectButtonContainer">
+                <button type="button" class="areaSelect" id="areaButton1"></button>
+                <button type="button" class="areaSelect" id="areaButton2"></button>
+                <button type="button" class="areaSelect" id="areaButton3"></button>
             </div>
 
+            <div id="battleButtonContainer">
+                <button type="button" class="attack" id="attack1button">attack1</button>
+                <label class="attack" id="attack1label">Description for <br> move 1</label>
+                <button type="button" class="attack" id="attack2button">attack2</button>
+                <label class="attack" id="attack2label"></label>
+                <button type="button" class="attack" id="switch">Switch</button>
+                <label class="attack" id="switchLabel"></label>
+            </div>
+        </div>
+
+        <div id="partyList">
+            
         </div>
     </body>
 </html>
