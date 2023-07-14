@@ -1,4 +1,4 @@
-var textSpeed = 30;
+var textSpeed = 5;
 var playerName = "";
 var playerDesc = "";
 var timeouts = [];
@@ -11,6 +11,7 @@ function Character() {
     this.description = playerDesc;
     this.quest = "";
     this.entrance = "";
+    this.picture = "cad icon.png";
     this.maxhp = 50;
     this.hp = 50;
     this.displayhp = 50;
@@ -102,7 +103,7 @@ function Wick() {
     this.description = "Character from Fortnite";
     this.quest = "Hire an assassin to fight you.";
     this.entrance = "You pick up the phone and dial 1-800-KILL. \"Give me one of your finest hitmen. What? Who should their target be? Me.\""
-    + "\nWithing seconds, an assassin does a cool combat roll toward you. \"I've come for everything they said I couldn't have, even you.\"";
+    + "\nWithin seconds, an assassin does a cool combat roll toward you. \"I've come for everything they said I couldn't have, even you.\"";
     this.maxhp = 60;
 
     this.move1name = "Pencil Shank";
@@ -124,8 +125,6 @@ function Wick() {
             hits++;
             swings++;
             target.hp -= 5;
-            let oldText = `${hits - 1}/${swings - 1}`;
-            let newText = `${hits - 1}/${swings - 1}`;
             timeouts.push(setTimeout(replaceText, message1Time + swings*5*textSpeed, `${hits - 1}/${swings - 1}`, `${hits}/${swings}`));
             if (target.hp == 0) {
                 break;
@@ -180,6 +179,8 @@ function addAllEnemiesToPool() {
     fightPool = [];
     const blart = new Blart(); blart.refresh(); fightPool.push(blart);
     const wick = new Wick(); wick.refresh(); fightPool.push(wick);
+    party.push(wick, blart);
+    displayParty(null, null, true);
 }
 
 function removeEnemyFromPool(enemy) {
@@ -256,55 +257,59 @@ function displayAreaSelection(pickedFights) {
 
 // To have a blank button pad, call this with null as parameter
 function displayBattleButtons(fighter, enemy, setButtonFunctions) {
+    console.log("battlebuttons");
     clearAllTimeouts();
     console.log(fighter.hp, enemy.hp);
-    buttons = [document.querySelector("#attack1button"), document.querySelector("#attack2button"), document.querySelector("#switch")];
-    labels = [document.querySelector("#attack1label"), document.querySelector("#attack2label"), document.querySelector("#switchLabel")];
+    buttons = [$("#attack1button"), $("#attack2button")];
+    labels = [$("#attack1label"), $("#attack2label")];
 
     if (fighter == null) {   
-        buttons[0].innerHTML = "";
-        buttons[1].innerHTML = "";
-        labels[0].innerHTML = "";
-        labels[1].innerHTML = "";
+        buttons[0].html("");
+        buttons[1].html("");
+        labels[0].html("");
+        labels[1].html("");
 
         if (setButtonFunctions) {
-            buttons[0].onclick = function() {};
-            buttons[1].onclick = function() {};
+            buttons[0].off("click");
+            buttons[1].off("click");
         }
-        
     }
+
     else {
-        buttons[0].innerHTML = fighter.move1name;
-        buttons[1].innerHTML = fighter.move2name;
-        labels[0].innerHTML = fighter.move1desc;
-        labels[1].innerHTML = fighter.move2desc;
+        buttons[0].html(fighter.move1name);
+        buttons[1].html(fighter.move2name);
+        labels[0].html(fighter.move1desc);
+        labels[1].html(fighter.move2desc);
 
         if (setButtonFunctions) {
-            buttons[0].onclick = function() {hideBattleButtons(); timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true))};
-            buttons[1].onclick = function() {hideBattleButtons(); timeouts.push(setTimeout(damageAnimation, fighter.attack2(fighter, enemy), fighter, enemy, true))};
+            buttons[0].off("click").on("click", function() {hideBattleButtons(); timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true))});
+            buttons[1].off("click").on("click", function() {hideBattleButtons(); timeouts.push(setTimeout(damageAnimation, fighter.attack2(fighter, enemy), fighter, enemy, true))});
         }
     }
-
-    buttons[2].textContent = "Switch";
-    labels[2].textContent = "Choose a different fighter. The enemy will go first.";
-    if (setButtonFunctions) {
-
-    }
-
     $("#battleButtonContainer").css("display", "grid");
 }
 
 function hideBattleButtons() {
     $("#battleButtonContainer").css("display", "none");
 }
-                                        // Game Logic Functions
-function chooseCharacter(currentFighter, enemy) {
+                                        // Game Logic/Flow Functions
+function displayParty(currentFighter, enemy, canSwitch) {
+    let partyDivContents = "";
     if (currentFighter == null) {
-
+        console.log(party.length);
+        for (let i = 0; i < party.length; i++) {
+            partyDivContents += 
+            `<div class="partyMemberContainer">
+                <img src="${party[i].picture}"></img>
+                <progress max="${party[i].maxhp}" value="${party.displayhp}"></progress>
+                <label>${party[i].name}</label>
+            </div>`
+        }
     }
     else {
         
     }
+    $("#partyList").html(partyDivContents);
 }
 
 function checkBattleStatus(player, enemy, wasPlayerTurn) {
@@ -369,6 +374,7 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
 }
 
 function playerTurn(player, enemy) {
+    console.log("playerturn");
     displayBattleButtons(player, enemy, true);
 }
 

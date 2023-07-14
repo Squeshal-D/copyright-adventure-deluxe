@@ -43,6 +43,46 @@ button {
     display: block;
     position: absolute;
 }
+
+.partyMemberContainer {
+    width: 100%;
+    height: 8%;
+    left: 0;
+    bottom: 0;
+    padding-top: 0px;
+    margin-top: 0px;
+    display: block;
+    position: relative;
+    background-color: white;
+    border: 1px solid black;
+}
+
+.partyMemberContainer img {
+    height: 100%;
+    left: 0;
+    top: 0;
+    aspect-ratio: 1 / 1;
+    position: absolute;
+    
+}
+
+.partyMemberContainer progress {
+    width: 80%;
+    height: 50%;
+    left: 20%;
+    top: 0;
+    margin-top: 0px;
+    padding-top: 0px;
+    position: absolute;
+}
+
+.partyMemberContainer label {
+    width: 68%;
+    height: 75%;
+    left: 32%;
+    bottom: 0;
+    position: absolute;
+}
                                     /* Text Box Components */
 #textBox {
     width: 50%;
@@ -146,7 +186,7 @@ button.areaSelect {
     position: absolute;
     display: grid;
     grid-template-columns: 25% auto;
-    grid-template-rows: 40% 40% auto;
+    grid-template-rows: 50% auto;
 }
 
 .attack {
@@ -168,11 +208,6 @@ label.attack {
     grid-row: 2 / 3;
 }
 
-#switch {
-    grid-column: 1 / 2;
-    grid-row: 3 / -1;
-}
-
 #attack1label {
     grid-column: 2 / 3;
     grid-row: 1 / 2;
@@ -181,9 +216,4 @@ label.attack {
 #attack2label {
     grid-column: 2 / 3;
     grid-row: 2 / 3;
-}
-
-#switchLabel {
-    grid-column: 2 / 3;
-    grid-row: 3 / -1;
 }
