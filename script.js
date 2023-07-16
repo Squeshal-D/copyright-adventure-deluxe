@@ -301,7 +301,7 @@ function displayParty(currentFighter, enemy, canSwitch) {
             partyDivContents += 
             `<div class="partyMemberContainer">
                 <img src="${party[i].picture}"></img>
-                <progress max="${party[i].maxhp}" value="${party.displayhp}"></progress>
+                <div class="progressBar" id="progress${i}" style="background-color:red;">bar</div>
                 <label>${party[i].name}</label>
             </div>`
         }
