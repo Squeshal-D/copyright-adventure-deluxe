@@ -17,7 +17,7 @@ function Character() {
     this.displayhp = 50;
 
     this.boss = false;
-    this.charging = false;
+    this.charging = 0;
     this.special = 0;
 
     this.move1name = "Punch";
@@ -29,12 +29,13 @@ function Character() {
         this.hp += damage;
         if (this.hp > this.maxhp) this.hp = this.maxhp;
         else if (this.hp < 0) this.hp = 0;
+        this.displayhp = this.hp;
     }
 
     this.refresh = function() {
         this.hp = this.maxhp;
         this.displayhp = this.maxhp;
-        this.charging = false;
+        this.charging = 0;
         this.special = 0;
     }
 
@@ -124,7 +125,7 @@ function Wick() {
         while (roll > missChance) {
             hits++;
             swings++;
-            target.hp -= 5;
+            target.changehp(-5);
             timeouts.push(setTimeout(replaceText, message1Time + swings*5*textSpeed, `${hits - 1}/${swings - 1}`, `${hits}/${swings}`));
             if (target.hp == 0) {
                 break;
@@ -152,7 +153,7 @@ function Wick() {
 }
                                         // Utility Functions
 function clearAllTimeouts() {
-    console.log(`There were ${timeouts.length} timeouts.`);
+    // console.log(`There were ${timeouts.length} timeouts.`);
     for (let i = 0; i < timeouts.length; i++) {
         clearTimeout(timeouts[i]);
     }
@@ -162,6 +163,7 @@ function clearAllTimeouts() {
 function setStartConditions() {
     clearAllTimeouts();
     party = [];
+    displayParty(null, null, false);
     addAllEnemiesToPool();
     clearTextBox();
     displayNameEntry(false);
@@ -179,12 +181,17 @@ function addAllEnemiesToPool() {
     fightPool = [];
     const blart = new Blart(); blart.refresh(); fightPool.push(blart);
     const wick = new Wick(); wick.refresh(); fightPool.push(wick);
-    party.push(wick, blart);
-    displayParty(null, null, true);
 }
 
 function removeEnemyFromPool(enemy) {
     fightPool.splice(fightPool.indexOf(enemy), 1);
+}
+
+function getHealthBarColor(hp, maxhp) {
+    let float = hp/maxhp;
+    if (float > 0.6666) return "lightgreen";
+    else if (float > 0.3333) return "orange";
+    else return "red";
 }
                                         // UI Functions
 // This function can be used as a `delay` parameter for setTimeout, to set an action after the message has been typed.
@@ -255,11 +262,8 @@ function displayAreaSelection(pickedFights) {
     $("#areaSelectButtonContainer").css("display", "block");
 }
 
-// To have a blank button pad, call this with null as parameter
 function displayBattleButtons(fighter, enemy, setButtonFunctions) {
-    console.log("battlebuttons");
     clearAllTimeouts();
-    console.log(fighter.hp, enemy.hp);
     buttons = [$("#attack1button"), $("#attack2button")];
     labels = [$("#attack1label"), $("#attack2label")];
 
@@ -282,8 +286,16 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
         labels[1].html(fighter.move2desc);
 
         if (setButtonFunctions) {
-            buttons[0].off("click").on("click", function() {hideBattleButtons(); timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true))});
-            buttons[1].off("click").on("click", function() {hideBattleButtons(); timeouts.push(setTimeout(damageAnimation, fighter.attack2(fighter, enemy), fighter, enemy, true))});
+            buttons[0].off("click").on("click", function() {
+                hideBattleButtons(); 
+                displayParty(fighter, enemy, false);
+                timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true));
+            });
+            buttons[1].off("click").on("click", function() {
+                hideBattleButtons(); 
+                displayParty(fighter, enemy, false);
+                timeouts.push(setTimeout(damageAnimation, fighter.attack2(fighter, enemy), fighter, enemy, true));
+            });
         }
     }
     $("#battleButtonContainer").css("display", "grid");
@@ -294,22 +306,50 @@ function hideBattleButtons() {
 }
                                         // Game Logic/Flow Functions
 function displayParty(currentFighter, enemy, canSwitch) {
+    $("#partyMemberContainer").off("mouseleave");
     let partyDivContents = "";
-    if (currentFighter == null) {
-        console.log(party.length);
-        for (let i = 0; i < party.length; i++) {
-            partyDivContents += 
-            `<div class="partyMemberContainer">
-                <img src="${party[i].picture}"></img>
-                <div class="progressBar" id="progress${i}" style="background-color:red;">bar</div>
-                <label>${party[i].name}</label>
-            </div>`
-        }
-    }
-    else {
-        
+    for (let i = 0; i < party.length; i++) {
+        $(`#party${i}`).off();
+        $(`#party${i} *`).css("cursor", "default");
+        if (currentFighter != null && currentFighter == party[i]) continue;
+
+        let healthBarColor = getHealthBarColor(party[i].displayhp, party[i].maxhp);
+        partyDivContents += 
+        `<div class="partyMemberContainer" id="party${i}">
+            <img src="${party[i].picture}"></img>
+            <div class="progressBarBackground" style="background-color:whitesmoke;"></div>
+            <div class="progressBar" id="progress${i}" style="background-color:${healthBarColor}; width:calc(100% * ${party[i].displayhp}/${party[i].maxhp});"></div>
+            <label class="progressBarLabel">${party[i].displayhp}/${party[i].maxhp}</label>
+            <label class="partyName">${party[i].name}</label>
+        </div>`;
     }
     $("#partyList").html(partyDivContents);
+
+    if (canSwitch) {
+        $(".partyMemberContainer").on("mouseleave", function() {displayBattleButtons(currentFighter, enemy, true)});
+        for (let i = 0; i < party.length; i++) {
+            if (currentFighter != null && party[i] == currentFighter) continue;
+
+            $(`#party${i} *`).css("cursor", "pointer");
+            $(`#party${i}`).on("mouseover", function() {
+                displayBattleButtons(party[i], enemy, false);
+            });
+            if (currentFighter == null) { // Enemy does not go first if forced to change character
+                $(`#party${i}`).on("click", function() {
+                    displayParty(party[i], enemy, false);
+                    hideBattleButtons();
+                    timeouts.push(setTimeout(playerTurn, typeText(`${party[i].name} enters the ring!`, true), party[i], enemy));
+                });
+            }
+            else {                        // Enemy goes first if character is changed by choice
+                $(`#party${i}`).on("click", function() {
+                    displayParty(party[i], enemy, false);
+                    hideBattleButtons();
+                    timeouts.push(setTimeout(enemyTurn, typeText(`${party[i].name} takes ${currentFighter.name}'s place.`, true), party[i], enemy));
+                });
+            }
+        }
+    }
 }
 
 function checkBattleStatus(player, enemy, wasPlayerTurn) {
@@ -322,6 +362,7 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
             if (enemy.boss) enemyDead = `${enemy.name} was defeated! You won!`;
             else {
                 enemyDead = `${enemy.name} was defeated and has joined the party!`;
+                enemy.refresh();
                 party.push(enemy);
             }
         }
@@ -329,6 +370,7 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
             if (enemy.boss) enemyDead = `${enemy.name} annihilated themselves. You won!`;
             else {
                 enemyDead = `${enemy.name} died during their own attack and joined the party!`;
+                enemy.refresh();
                 party.push(enemy);
             }
         }
@@ -361,6 +403,7 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
 
     if (party.length == 0) timeouts.push(setTimeout(gameOver, totalMessageTime));
     else if (enemyDead != "") timeouts.push(setTimeout(areaSelect, totalMessageTime));
+    else if (playerDead != "") timeouts.push(setTimeout(playerTurn, totalMessageTime, null, enemy));
     else if (wasPlayerTurn) timeouts.push(setTimeout(enemyTurn, totalMessageTime, player, enemy));
     else timeouts.push(setTimeout(playerTurn, totalMessageTime, player, enemy));
 }
@@ -374,18 +417,21 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
 }
 
 function playerTurn(player, enemy) {
-    console.log("playerturn");
+    if (player != null && enemy != null) console.log(player.hp, enemy.hp);
+    displayParty(player, enemy, true);
     displayBattleButtons(player, enemy, true);
 }
 
 function enemyTurn(player, enemy) {
+    if (player != null && enemy != null) console.log(player.hp, enemy.hp);
+    displayParty(player, enemy, false);
     let randAttack = Math.floor(Math.random() * 2);
     if (randAttack == 0) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
     else timeouts.push(setTimeout(damageAnimation, enemy.attack2(enemy, player), player, enemy, false));
 }
 
 function enemyEntrance(enemy) {
-    timeouts.push(setTimeout(playerTurn, typeText(enemy.entrance, true), party[0], enemy));
+    timeouts.push(setTimeout(playerTurn, typeText(enemy.entrance, true), null, enemy));
 }
 
 function askForNameAndDescription() {
@@ -428,6 +474,7 @@ function askForNameAndDescription() {
 }
 
 function areaSelect() {
+    displayParty(null, null, false);
     let message = "What an exhilarating battle! You're not done yet, though. There are still opponents to be conquered. What will you do next?";
     if (fightPool.length == 2) { // Display different message for if the game has just started.
         message = "There comes a time in every man's life when they must embark on an epic quest to defeat numerous people."
