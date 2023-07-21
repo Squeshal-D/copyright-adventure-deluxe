@@ -21,9 +21,9 @@ function Character() {
     this.special = 0;
 
     this.move1name = "Punch";
-    this.move1desc = "How normal.<br>(15-20 dmg)";
+    this.move1desc = "How normal. <br>(15-25 dmg)";
     this.move2name = "Juul";
-    this.move2desc = "A sophomore classic.<br>50% chance to trigger a Bowers attack (30 dmg).";
+    this.move2desc = "A sophomore classic. <br>50% chance to trigger a Bowers attack (30 dmg).";
 
     this.changehp = function(damage) {
         this.hp += damage;
@@ -37,6 +37,10 @@ function Character() {
         this.displayhp = this.maxhp;
         this.charging = 0;
         this.special = 0;
+    }
+
+    this.afterFight = function() {
+        this.charging = 0;
     }
 
     this.attack1 = function(user, target) {
@@ -66,9 +70,9 @@ function Blart() {
     this.maxhp = 80;
 
     this.move1name = "Segway Slam";
-    this.move1desc = "An all-out rollout.\nHas a 50% chance to hit (40 dmg), as well as a 50% chance to recoil (20 self dmg).";
+    this.move1desc = "An all-out rollout. <br>Has a 50% chance to hit (40 dmg), as well as a 50% chance to recoil (20 self dmg).";
     this.move2name = "Headbutt";
-    this.move2desc = "\"Nobody wins with a headbutt.\"\n(25 dmg) (15 self dmg).";
+    this.move2desc = "\"Nobody wins with a headbutt.\" <br>(25 dmg) (15 self dmg).";
 
     this.attack1 = function(user, target) {
         let message = "";
@@ -104,13 +108,13 @@ function Wick() {
     this.description = "Character from Fortnite";
     this.quest = "Hire an assassin to fight you.";
     this.entrance = "You pick up the phone and dial 1-800-KILL. \"Give me one of your finest hitmen. What? Who should their target be? Me.\""
-    + "\nWithin seconds, an assassin does a cool combat roll toward you. \"I've come for everything they said I couldn't have, even you.\"";
+    + " Within seconds, an assassin does a cool combat roll toward you. \"I've come for everything they said I couldn't have, even you.\"";
     this.maxhp = 60;
 
     this.move1name = "Pencil Shank";
-    this.move1desc = "A school classic.<br>Keeps attacking (5 dmg) until John Wick misses (30% chance).";
+    this.move1desc = "A school classic. <br>Keeps attacking (5 dmg) until John Wick misses (30% chance).";
     this.move2name = "Neck Snap";
-    this.move2desc = "Anticlimactic Finisher. Could instantly kill an enemy, chance increases as enemy's HP gets low.";
+    this.move2desc = "Anticlimactic Finisher. <br>Could instantly kill an enemy. <br>Chance increases as enemy's HP gets low.";
 
     this.attack1 = function(user, target) {
         let hits = 0;
@@ -151,6 +155,191 @@ function Wick() {
         
     }
 }
+
+function Derrek() {
+    Character.call(this);
+
+    this.name = "Derrek";
+    this.description = "Sharks Fan";
+    this.quest = "Go to Derrek's house.";
+    this.entrance = "You go up to Derrek's house and knock on the door. Derrek's mom answers the door. She is very nice, and you ask her if Derrek is home."
+        + " She invites you in and gives you some hot cocoa. You are rudely interrupted by Derrek, though. You put down the cocoa and tell Derrek's mom, "
+        + " \"Sorry, but I'm going to have to kick your son's bootay.\"";
+    this.maxhp = 50;
+
+    this.move1name = "Baseball Smash";
+    this.move1desc = "A joke Derrek and I have. <br>(15 dmg) <br>Finishes an enemy that's 30 hp or lower.";
+    this.move2name = "Airplane Smash";
+    this.move2desc = "Watch yo jet! <br>(25 dmg) <br>20% chance Derrek crashes the plane...";
+
+    this.attack1 = function(user, target) {
+        if (target.hp <= 30) {
+            target.changehp(-target.hp);
+            return typeText(`${user.name} smashes ${target.name}'s head clean off! Eww...`, true);
+        }
+        else {
+            target.changehp(-15);
+            return typeText(`${user.name} bats ${target.name} for 15 damage!`, true);
+        }
+    }
+
+    this.attack2 = function(user, target) {
+        let message = `${user.name} clips ${target.name} with a freaking airplane for 25 damage...`;
+        target.changehp(-25);
+        if (Math.floor(Math.random()*5) == 0) {
+            message += " and crashes the plane in a blaze of glory!";
+            user.changehp(-user.hp);
+        }
+        else message += " and lands the plane safely!";
+
+        return typeText(message, true);
+    }
+}
+
+function Bowers() {
+    Character.call(this);
+
+    this.name = "John Bowers";
+    this.description = "Disher of Discipline";
+    this.quest = "Visit CVCHS";
+    this.entrance = "You've arrived in the senior lot. Something isn't right. The gate is closed. You look at the time."
+    + " Would anyone be willing to fight at 8:01? You turn around when, \"HEY! I've caught you!\"";
+    this.maxhp = 50;
+
+    this.move1name = "Ambush";
+    this.move1desc = "You can never expect it. <br>(15 dmg) <br>(30 dmg) on full hp opponents.";
+    this.move2name = "Words of Encouragement";
+    this.move2desc = "Word Diarrhea. <br>20% chance to defeat the opponent. <br>Otherwise, fully heals the opponent.";
+
+    this.attack1 = function(user, target) {
+        if (target.hp == target.maxhp) {
+            target.changehp(-30);
+            return typeText(`Surprise! ${user.name} ambushed ${target.name} when they weren't expecting it for 30 damage!`, true);
+        }
+        else {
+            target.changehp(-15);
+            return typeText(`${user.name} ambushed ${target.name}. They weren't surprised, but got a fat spank for 15 damage.`, true);
+        }
+    }
+
+    this.attack2 = function(user, target) {
+        let message = `${user.name} spread words of encouragement.`;
+        if (Math.floor(Math.random()*5) == 0) {
+            target.changehp(-target.hp);
+            message += ` ${target.name} couldn't stand the cheesy dialogue and died.`;
+        }
+        else {
+            target.changehp(target.maxhp);
+            message += ` ${target.name} was inspired deeply and healed fully`;
+        }
+        return typeText(message, true);
+    }
+}
+
+function Chief() {
+    Character.call(this);
+
+    this.name = "Master Chief";
+    this.description = "AKA Halo";
+    this.quest = "Hijack a space vessel.";
+    this.entrance = "Hijacking a space vessel would surely cause the government to send special forces to stop you, and they do!"
+    + " As soon as the armored warrior approaches you, he informs you that what you are doing is 'illegal' and that he needs a weapon.";
+    this.maxhp = 100;
+
+    this.move1name = "Assault Rifle";
+    this.move1desc = "Low damage, inaccurate, but iconic! <br>Each of the 32 bullets have a 50% chance of hitting.";
+    this.move2name = "Spartan Laser";
+    this.move2desc = "Very bad-A w*rd. <br>(40 dmg) <br>Has to charge for one turn.";
+
+    this.attack1 = function(user, target) {
+        let hits = 0;
+        let shots = 0;
+        let message1 = `${user.name} unloads an assault rifle on ${target.name} and hits ${hits}/${shots}`;
+        let message1Time = typeText(message1, true);
+        let message2 = " shots!";
+        let message2Time = getTypeTextTime(message2);
+        const missChance = 0.5;
+        
+        for (let i = 0; i < 32; i++) {
+            shots++;
+            if (Math.random() > missChance) {
+                hits++;
+                timeouts.push(setTimeout(replaceText, message1Time + shots*textSpeed, `${hits - 1}/${shots - 1}`, `${hits}/${shots}`));
+            }
+            else timeouts.push(setTimeout(replaceText, message1Time + shots*textSpeed, `${hits}/${shots - 1}`, `${hits}/${shots}`));
+        }
+        timeouts.push(setTimeout(typeText, message1Time + (shots + 1)*textSpeed, message2, false));
+        target.changehp(-hits);
+        return message1Time + (shots + 1)*textSpeed + message2Time;
+    }
+
+    this.attack2 = function(user, target) {
+        if (this.charging == 0) {
+            this.charging = 2;
+            return typeText(`${user.name} charges the spartan laser!`, true);
+        }
+        else {
+            this.charging = 0;
+            target.changehp(-40);
+            return typeText(`${user.name} fires the spartan laser at ${target.name} for 40 damage!`, true);
+        }
+    }
+}
+
+function Lennie() {
+    Character.call(this);
+
+    this.name = "Lennie Small";
+    this.description = "Pro Rabbit Tender";
+    this.quest = "Go into that big ol barn over there.";
+    this.entrance = "The huge barn door slowly opens and you peek inside. By the light through the door you can see the figure of a large man"
+    + " petting a small mouse. \"You're lookin' pretty soft.\" He drops the lifeless rodent and lumbers toward you.";
+    this.maxhp = 80;
+
+    this.move1name = "Hair Pull";
+    this.move1desc = "Lennie can't resist! <br>Gets stronger as Lennie's hp drops (0-40 dmg).";
+    this.move2name = "Hand Crusher";
+    this.move2desc = "Gonna need a glove fulla vaseline after this one. <br>Does more damage on characters with low max hp (0-30 dmg).";
+
+    this.attack1 = function(user, target) {
+        let damage = (user.maxhp - user.hp)/2
+        target.changehp(-damage);
+        return typeText(`${user.name} pulls on ${target.name}'s hair for ${damage} damage!`);
+    }
+
+    this.attack2 = function(user, target) {
+        let damage = 1500/target.maxhp;
+        target.changehp(-damage);
+        return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`);
+    }
+}
+
+function Ramsay() {
+    Character.call(this);
+
+    this.name = "Gordon Ramsay";
+    this.description = "Aggressive Chef";
+    this.quest = "Enter the kitchen.";
+    this.entrance = "You're feeling a little hungry, so you take a trip to the local kitchen. Using the equipment available, you make a PB&J."
+    + " A man dressed in white approaches as you chomp away. \"Do you have any idea where you are? You're in Hell's Kitchen!\"";
+    this.maxhp = 50;
+
+    this.move1name = "Pan Slam";
+    this.move1desc = "Very unoriginal. <br>(15 dmg)";
+    this.move2name = "Gordonmet";
+    this.move2desc = "Exquisitely gourmet. <br>Cook a meal for Gordon or a teammate (+20 hp)!";
+
+    this.attack1 = function(user, target) {
+        target.changehp(-15);
+        return typeText(`${user.name} hits ${target.name} with a frying pan for 15 damage!`);
+    }
+
+    this.attack2 = function(user, target) {
+        let damage = 1500/target.maxhp;
+        target.changehp(-damage);
+        return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`);
+    }
+}
                                         // Utility Functions
 function clearAllTimeouts() {
     // console.log(`There were ${timeouts.length} timeouts.`);
@@ -181,6 +370,10 @@ function addAllEnemiesToPool() {
     fightPool = [];
     const blart = new Blart(); blart.refresh(); fightPool.push(blart);
     const wick = new Wick(); wick.refresh(); fightPool.push(wick);
+    const derrek = new Derrek(); derrek.refresh(); fightPool.push(derrek);
+    const bowers = new Bowers(); bowers.refresh(); fightPool.push(bowers);
+    const chief = new Chief(); chief.refresh(); fightPool.push(chief);
+    const lennie = new Lennie(); lennie.refresh(); fightPool.push(lennie);
 }
 
 function removeEnemyFromPool(enemy) {
@@ -374,6 +567,7 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
                 party.push(enemy);
             }
         }
+        afterFightWholeParty();
     }
     if (player.hp <= 0) {
         if (wasPlayerTurn) {
@@ -408,6 +602,12 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
     else timeouts.push(setTimeout(playerTurn, totalMessageTime, player, enemy));
 }
 
+function afterFightWholeParty() {
+    for (let i = 0; i < party.length; i++) {
+        party[i].afterFight();
+    }
+}
+
 function gameOver() {
     timeouts.push(setTimeout(typeText, typeText("You are out of party members.", true), "GAME OVER - Press the restart button to try again.", true));
 }
@@ -418,16 +618,30 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
 
 function playerTurn(player, enemy) {
     if (player != null && enemy != null) console.log(player.hp, enemy.hp);
-    displayParty(player, enemy, true);
-    displayBattleButtons(player, enemy, true);
+    if (player == null || player.charging == 0) {
+        displayParty(player, enemy, true);
+        displayBattleButtons(player, enemy, true);
+    }
+    else {
+        displayParty(player, enemy, false);
+        if (player.charging == 1) timeouts.push(setTimeout(damageAnimation, player.attack1(player, enemy), player, enemy, true));
+        else timeouts.push(setTimeout(damageAnimation, player.attack2(player, enemy), player, enemy, true));
+    }
+    
 }
 
 function enemyTurn(player, enemy) {
     if (player != null && enemy != null) console.log(player.hp, enemy.hp);
     displayParty(player, enemy, false);
-    let randAttack = Math.floor(Math.random() * 2);
-    if (randAttack == 0) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
-    else timeouts.push(setTimeout(damageAnimation, enemy.attack2(enemy, player), player, enemy, false));
+    if (enemy.charging == 0) {
+        let randAttack = Math.floor(Math.random() * 2);
+        if (randAttack == 0) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
+        else timeouts.push(setTimeout(damageAnimation, enemy.attack2(enemy, player), player, enemy, false));
+    }
+    else {
+        if (enemy.charging == 1) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
+        else timeouts.push(setTimeout(damageAnimation, enemy.attack2(enemy, player), player, enemy, false));
+    }
 }
 
 function enemyEntrance(enemy) {
@@ -462,9 +676,10 @@ function askForNameAndDescription() {
             if (nameField.value.trim().length != 0) {
                 playerDesc = nameField.value.trim();
                 displayNameEntry(false);
-                party.push(new Character());
-                party[0].name = playerName;
-                party[0].description = playerDesc;
+                const playerChar = new Character();
+                playerChar.name = playerName;
+                playerChar.description = playerDesc;
+                party.push(playerChar);
                 timeouts.push(setTimeout(areaSelect, typeText("Prepare to embark on your epicc quest...", true)));
             }
         };
