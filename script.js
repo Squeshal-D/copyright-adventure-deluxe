@@ -1,4 +1,4 @@
-var textSpeed = 5;
+var textSpeed = 25;
 var playerName = "";
 var playerDesc = "";
 var timeouts = [];
@@ -329,16 +329,67 @@ function Ramsay() {
     this.move2name = "Gordonmet";
     this.move2desc = "Exquisitely gourmet. <br>Cook a meal for Gordon or a teammate (+20 hp)!";
 
-    this.attack1 = function(user, target) {
-        target.changehp(-15);
-        return typeText(`${user.name} hits ${target.name} with a frying pan for 15 damage!`);
+    function clickToHeal(currentFighter, thisPartyMember, enemy) {
+        displayParty(currentFighter, enemy, false, null);
+        hideBattleButtons();
+        thisPartyMember.changehp(20);
+        let message = `${currentFighter.name} cooks a gourmet meal for ${thisPartyMember.name}. They recover 20 hp.`;
+        timeouts.push(setTimeout(enemyTurn, typeText(message, true), currentFighter, enemy));
+        ramsaySetDefault(currentFighter);
     }
 
-    this.attack2 = function(user, target) {
-        let damage = 1500/target.maxhp;
-        target.changehp(-damage);
-        return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`);
+    function ramsaySetDefault(char) {
+        char.move1name = "Pan Slam";
+        char.move1desc = "Very unoriginal. <br>(15 dmg)";
+        char.move2name = "Gordonmet";
+        char.move2desc = "Exquisitely gourmet. <br>Cook a meal for Gordon or a teammate (+20 hp)!";
+        char.attack1 = defaultAttack1;
+        char.attack2 = defaultAttack2;
     }
+
+    function ramsaySetAltered(char) {
+        char.move1name = "Heal Self";
+        char.move1desc = "Let Gordon eat the meal. <br>(+20 hp)";
+        char.move2name = "Cancel";
+        char.move2desc = "Go back to move selection.";
+        char.attack1 = alteredAttack1;
+        char.attack2 = alteredAttack2;
+    }
+
+    function defaultAttack1(user, target) {
+        target.changehp(-15);
+        return typeText(`${user.name} hits ${target.name} with a frying pan for 15 damage!`, true);
+    }
+
+    function alteredAttack1(user, target) {
+        user.changehp(20);
+        ramsaySetDefault(user);
+        return typeText(`${user.name} cooks a gourmet meal for themself. They recover 20 hp.`, true);
+    }
+
+    function defaultAttack2(user, target) {
+        if (!party.includes(user)) {
+            user.changehp(20);
+            return typeText(`${user.name} cooks a gourmet meal for themself. They recover 20 hp.`, true);
+        }
+        else {
+            displayParty(user, target, false, clickToHeal);
+            ramsaySetAltered(user);
+            displayBattleButtons(user, target, true);
+        }
+        return 9999999999;
+    }
+
+    function alteredAttack2(user, target) {
+        displayParty(user, target, true, changeCharacterEnemyFirst);
+        ramsaySetDefault(user);
+        displayBattleButtons(user, target, true);
+        return 9999999999;
+    }
+
+    this.attack1 = defaultAttack1;
+
+    this.attack2 = defaultAttack2;
 }
                                         // Utility Functions
 function clearAllTimeouts() {
@@ -352,7 +403,7 @@ function clearAllTimeouts() {
 function setStartConditions() {
     clearAllTimeouts();
     party = [];
-    displayParty(null, null, false);
+    displayParty(null, null, false, null);
     addAllEnemiesToPool();
     clearTextBox();
     displayNameEntry(false);
@@ -374,6 +425,7 @@ function addAllEnemiesToPool() {
     const bowers = new Bowers(); bowers.refresh(); fightPool.push(bowers);
     const chief = new Chief(); chief.refresh(); fightPool.push(chief);
     const lennie = new Lennie(); lennie.refresh(); fightPool.push(lennie);
+    const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
 }
 
 function removeEnemyFromPool(enemy) {
@@ -456,7 +508,6 @@ function displayAreaSelection(pickedFights) {
 }
 
 function displayBattleButtons(fighter, enemy, setButtonFunctions) {
-    clearAllTimeouts();
     buttons = [$("#attack1button"), $("#attack2button")];
     labels = [$("#attack1label"), $("#attack2label")];
 
@@ -481,12 +532,12 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
         if (setButtonFunctions) {
             buttons[0].off("click").on("click", function() {
                 hideBattleButtons(); 
-                displayParty(fighter, enemy, false);
+                displayParty(fighter, enemy, false, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true));
             });
             buttons[1].off("click").on("click", function() {
                 hideBattleButtons(); 
-                displayParty(fighter, enemy, false);
+                displayParty(fighter, enemy, false, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack2(fighter, enemy), fighter, enemy, true));
             });
         }
@@ -498,7 +549,8 @@ function hideBattleButtons() {
     $("#battleButtonContainer").css("display", "none");
 }
                                         // Game Logic/Flow Functions
-function displayParty(currentFighter, enemy, canSwitch) {
+// Enter 'null' as onClickFunction if you want the buttons to do nothing
+function displayParty(currentFighter, enemy, previewOnHover, onClickFunction) {
     $("#partyMemberContainer").off("mouseleave");
     let partyDivContents = "";
     for (let i = 0; i < party.length; i++) {
@@ -518,31 +570,28 @@ function displayParty(currentFighter, enemy, canSwitch) {
     }
     $("#partyList").html(partyDivContents);
 
-    if (canSwitch) {
-        $(".partyMemberContainer").on("mouseleave", function() {displayBattleButtons(currentFighter, enemy, true)});
+    if (onClickFunction != null) {
+        if (previewOnHover) $(".partyMemberContainer").on("mouseleave", function() {displayBattleButtons(currentFighter, enemy, true)});
         for (let i = 0; i < party.length; i++) {
             if (currentFighter != null && party[i] == currentFighter) continue;
 
             $(`#party${i} *`).css("cursor", "pointer");
-            $(`#party${i}`).on("mouseover", function() {
-                displayBattleButtons(party[i], enemy, false);
-            });
-            if (currentFighter == null) { // Enemy does not go first if forced to change character
-                $(`#party${i}`).on("click", function() {
-                    displayParty(party[i], enemy, false);
-                    hideBattleButtons();
-                    timeouts.push(setTimeout(playerTurn, typeText(`${party[i].name} enters the ring!`, true), party[i], enemy));
-                });
-            }
-            else {                        // Enemy goes first if character is changed by choice
-                $(`#party${i}`).on("click", function() {
-                    displayParty(party[i], enemy, false);
-                    hideBattleButtons();
-                    timeouts.push(setTimeout(enemyTurn, typeText(`${party[i].name} takes ${currentFighter.name}'s place.`, true), party[i], enemy));
-                });
-            }
+            $(`#party${i}`).on("click", function() {onClickFunction(currentFighter, party[i], enemy)});
+            if (previewOnHover) $(`#party${i}`).on("mouseover", function() {displayBattleButtons(party[i], enemy, false)});
         }
     }
+}
+
+function changeCharacterPlayerFirst(currentFighter, thisPartyMember, enemy) {
+    displayParty(thisPartyMember, enemy, false, null);
+    hideBattleButtons();
+    timeouts.push(setTimeout(playerTurn, typeText(`${thisPartyMember.name} enters the ring!`, true), thisPartyMember, enemy));
+}
+
+function changeCharacterEnemyFirst(currentFighter, thisPartyMember, enemy) {
+    displayParty(thisPartyMember, enemy, false, null);
+    hideBattleButtons();
+    timeouts.push(setTimeout(enemyTurn, typeText(`${thisPartyMember.name} takes ${currentFighter.name}'s place.`, true), thisPartyMember, enemy));
 }
 
 function checkBattleStatus(player, enemy, wasPlayerTurn) {
@@ -618,12 +667,16 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
 
 function playerTurn(player, enemy) {
     if (player != null && enemy != null) console.log(player.hp, enemy.hp);
-    if (player == null || player.charging == 0) {
-        displayParty(player, enemy, true);
+    if (player == null) {
+        displayParty(player, enemy, true, changeCharacterPlayerFirst);
+        displayBattleButtons(player, enemy, true);
+    } 
+    else if (player.charging == 0) {
+        displayParty(player, enemy, true, changeCharacterEnemyFirst);
         displayBattleButtons(player, enemy, true);
     }
     else {
-        displayParty(player, enemy, false);
+        displayParty(player, enemy, false, null);
         if (player.charging == 1) timeouts.push(setTimeout(damageAnimation, player.attack1(player, enemy), player, enemy, true));
         else timeouts.push(setTimeout(damageAnimation, player.attack2(player, enemy), player, enemy, true));
     }
@@ -632,7 +685,7 @@ function playerTurn(player, enemy) {
 
 function enemyTurn(player, enemy) {
     if (player != null && enemy != null) console.log(player.hp, enemy.hp);
-    displayParty(player, enemy, false);
+    displayParty(player, enemy, false, null);
     if (enemy.charging == 0) {
         let randAttack = Math.floor(Math.random() * 2);
         if (randAttack == 0) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
@@ -689,9 +742,9 @@ function askForNameAndDescription() {
 }
 
 function areaSelect() {
-    displayParty(null, null, false);
+    displayParty(null, null, false, null);
     let message = "What an exhilarating battle! You're not done yet, though. There are still opponents to be conquered. What will you do next?";
-    if (fightPool.length == 2) { // Display different message for if the game has just started.
+    if (fightPool.length == 7) { // Display different message for if the game has just started.
         message = "There comes a time in every man's life when they must embark on an epic quest to defeat numerous people."
         + " Today, " + playerName + " begins their quest. The " + playerDesc + " walks outside their house. They consider their options.";
     }
