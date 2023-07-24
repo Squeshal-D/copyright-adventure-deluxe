@@ -18,7 +18,7 @@ function Character() {
 
     this.boss = false;
     this.charging = 0;
-    this.special = 0;
+    this.special = 0;  // miscellaneous integer for any complex move that may need it
 
     this.move1name = "Punch";
     this.move1desc = "How normal. <br>(15-25 dmg)";
@@ -299,18 +299,102 @@ function Lennie() {
     this.move1name = "Hair Pull";
     this.move1desc = "Lennie can't resist! <br>Gets stronger as Lennie's hp drops (0-40 dmg).";
     this.move2name = "Hand Crusher";
-    this.move2desc = "Gonna need a glove fulla vaseline after this one. <br>Does more damage on characters with low max hp (0-30 dmg).";
+    this.move2desc = "With a glove fulla vaseline. <br>Does more damage on characters with low max hp (0-30 dmg).";
 
     this.attack1 = function(user, target) {
-        let damage = (user.maxhp - user.hp)/2
+        let damage = 40 - Math.floor(40*user.hp/user.maxhp);
         target.changehp(-damage);
-        return typeText(`${user.name} pulls on ${target.name}'s hair for ${damage} damage!`);
+        return typeText(`${user.name} pulls on ${target.name}'s hair for ${damage} damage!`, true);
     }
 
     this.attack2 = function(user, target) {
-        let damage = 1500/target.maxhp;
+        let damage = Math.floor(1250/target.maxhp);
         target.changehp(-damage);
-        return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`);
+        return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`, true);
+    }
+}
+
+function Shrek() {
+    Character.call(this);
+
+    this.name = "Shrek";
+    this.description = "Dreamwork's All-Star";
+    this.quest = "Go hunt in the swamp.";
+    this.entrance = "Swamps are dangerous places. What makes this swamp even more dangerous, though, is that it is HIS swamp."
+    + " \"Oh hello there! Shrek here, and I'm ticked off!\"";
+    this.maxhp = 80;
+
+    this.move1name = "Shrek Superslam";
+    this.move1desc = "Wombo Combo. <br>(5 dmg) <br>+5 extra damage per party member.";
+    this.move2name = "Onion Onslaught";
+    this.move2desc = "O n i o n. <br>Throw 5 onions. <br>50% chance to hit an onion (6 dmg).";
+
+    this.attack1 = function(user, target) {
+        let allies = 0;
+        if (!party.includes(user)) allies = Math.floor(Math.random()*5);
+        else allies = party.length - 1;
+
+        let damage = 5*(allies + 1);
+        target.changehp(-damage);
+        return typeText(`${user.name} calls upon ${allies} allies and executes a Wombo Combo on ${target.name} for ${damage} damage!`, true);
+    }
+
+    this.attack2 = function(user, target) {
+        let hits = 0;
+        let shots = 0;
+        let message1 = `${user.name} gets the onions! They hit ${hits}/${shots}`;
+        let message1Time = typeText(message1, true);
+        let message2 = " onions!";
+        let message2Time = getTypeTextTime(message2);
+        const missChance = 0.5;
+        
+        for (let i = 0; i < 6; i++) {
+            shots++;
+            if (Math.random() > missChance) {
+                hits++;
+                timeouts.push(setTimeout(replaceText, message1Time + shots*5*textSpeed, `${hits - 1}/${shots - 1}`, `${hits}/${shots}`));
+            }
+            else timeouts.push(setTimeout(replaceText, message1Time + shots*5*textSpeed, `${hits}/${shots - 1}`, `${hits}/${shots}`));
+        }
+        timeouts.push(setTimeout(typeText, message1Time + (shots + 1)*5*textSpeed, message2, false));
+        target.changehp(-6*hits);
+        return message1Time + (shots + 1)*5*textSpeed + message2Time;
+    }
+}
+
+function Washington() {
+    Character.call(this);
+
+    this.name = "George Washington";
+    this.description = "Father of our Country";
+    this.quest = "Break into the Whitehouse.";
+    this.entrance = "You get past securty like a watermelon knife going through a stick of butter that has been in the oven for 5 hours."
+    + " You're expecting to see Trump aren't you? That would be too unoriginal, even for Copyright Adventure Deluxe."
+    + " \"What have they done to my country? Look at this debt!\"";
+    this.maxhp = 50;
+
+    this.move1name = "Cherry Chop";
+    this.move1desc = "It's no lie. <br>More damage against tougher enemies. <br>(10-40 dmg).";
+    this.move2name = "Musket Blast";
+    this.move2desc = "Go Minuteman mode. <br>(40 dmg) <br>Must reload after firing.";
+
+    this.attack1 = function(user, target) {
+        let damage = -20 + Math.floor(0.6*user.maxhp);
+        if (damage > 40) damage = 40;
+        target.changehp(-damage);
+        return typeText(`${user.name} swings an axe on ${target.name} for ${damage} damage!`, true);
+    }
+
+    this.attack2 = function(user, target) {
+        if (user.special == 0) {
+            target.changehp(-40);
+            user.special == 1;
+            return typeText(`${user.name} fires a musket at ${target.name} for ${damage} damage!`, true);
+        }
+        else {
+            user.special == 0;
+            return typeText(`${user.name} reloads their musket.`, true);
+        }
     }
 }
 
@@ -334,7 +418,7 @@ function Ramsay() {
         hideBattleButtons();
         thisPartyMember.changehp(20);
         let message = `${currentFighter.name} cooks a gourmet meal for ${thisPartyMember.name}. They recover 20 hp.`;
-        timeouts.push(setTimeout(enemyTurn, typeText(message, true), currentFighter, enemy));
+        timeouts.push(setTimeout(damageAnimation, typeText(message, true), currentFighter, enemy, true));
         ramsaySetDefault(currentFighter);
     }
 
