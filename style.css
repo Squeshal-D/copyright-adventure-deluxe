@@ -22,19 +22,56 @@ button {
                                     /* Options Box Components */
 #optionsBox {
     width: 25%;
-    height: 50%;
+    height: 100%;
     left: 75%;
     top: 0;
     position: absolute;
     display: block;
+    justify-content: center;
+}
+
+#optionsBox * {
+    margin-top: 5%;
 }
 
 #restart {
     width: 75%;
-    height: 25%;
-    left: 12.5%;
+    height: 10%;
+    font-size: 3vmin;
+    display: block;
+    margin: auto;
+}
+
+#gameSpeedContainer {
+    width: 75%;
+    height: 10%;
+    display: grid;
+    grid-template-columns: 34% 33% auto;
+    grid-template-rows: 50% fit-content(1%);
+    margin: auto;
+}
+
+#gameSpeedContainer * {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background-color: lightgrey;
+    outline: 1px solid black;
+}
+
+#gameSpeedContainer .optionButton {
+    cursor: pointer;
+    font-size: 2vmin;
+}
+
+#gameSpeedTop {
+    grid-column: 1 / 4; grid-row: 1 / 2;
     font-size: 3vmin;
 }
+
+#normal {grid-column: 1 / 2; grid-row: 2 / 3;}
+#fast {grid-column: 2 / 3; grid-row: 2 / 3;}
+#ultra {grid-column: 3 / 4; grid-row: 2 / 3;}
                                     /* Party List Components */
 #partyList {
     width: 25%;
@@ -56,7 +93,7 @@ button {
     grid-template-rows: 50% 50%;
     background-color: white;
     box-sizing: border-box;
-    border: 1px solid black;
+    border: 3px solid black;
 }
 
 .partyMemberContainer img {
@@ -85,7 +122,7 @@ button {
     grid-column: 2 / 3;
     grid-row: 2 / 3;
     text-align: center;
-    font-size: 3vmin;
+    font-size: 2.5vmin;
 }
                                     /* Text Box Components */
 #textBox {
@@ -130,6 +167,12 @@ button {
     grid-template-rows: 15% 15% 25% 25% auto;
 }
 
+#battleDisplayTopColor {
+    grid-column: 1 / 8; grid-row: 1 / 3;
+    background-color: lightgrey;
+    outline: 1px solid black;
+}
+
 #currentFighterName {grid-column: 1 / 5; grid-row: 1 / 2; text-align: left; margin-left: 1%;}
 #currentFighterDesc {grid-column: 1 / 5; grid-row: 2 / 3; text-align: left; margin-left: 1%;}
 #currentFighterPicture {grid-column: 2 / 3; grid-row: 3 / 5;}
@@ -144,13 +187,7 @@ button {
 #currentEnemyBarLabel {grid-column: 4 / 6; grid-row: 4 / 5; 
     height: 50%; width: 100%; position: absolute; bottom: 3px; right: 0;}
 
-#currentFighterBarBackground {
-    outline: 3px solid black;
-}
-
-#currentEnemyBarBackground {
-    outline: 3px solid black;
-}
+#currentFighterBarBackground, #currentEnemyBarBackground {outline: 3px solid black;}
 
 #battleDisplay .progressBarLabel {
     text-align: center;

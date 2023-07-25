@@ -1,4 +1,5 @@
-var textSpeed = 25;
+var gameSpeed = 0;  // 0-2, 2 is fastest
+var textSpeed = 30;
 var playerName = "";
 var playerDesc = "";
 var timeouts = [];
@@ -29,7 +30,6 @@ function Character() {
         this.hp += damage;
         if (this.hp > this.maxhp) this.hp = this.maxhp;
         else if (this.hp < 0) this.hp = 0;
-        this.displayhp = this.hp;
     }
 
     this.refresh = function() {
@@ -299,7 +299,7 @@ function Lennie() {
     this.move1name = "Hair Pull";
     this.move1desc = "Lennie can't resist! <br>Gets stronger as Lennie's hp drops (0-40 dmg).";
     this.move2name = "Hand Crusher";
-    this.move2desc = "With a glove fulla vaseline. <br>Does more damage on characters with low max hp (0-30 dmg).";
+    this.move2desc = "With a glove fulla vaseline. <br>Does more damage on characters with low max hp (0-25 dmg).";
 
     this.attack1 = function(user, target) {
         let damage = 40 - Math.floor(40*user.hp/user.maxhp);
@@ -379,7 +379,7 @@ function Washington() {
     this.move2desc = "Go Minuteman mode. <br>(40 dmg) <br>Must reload after firing.";
 
     this.attack1 = function(user, target) {
-        let damage = -20 + Math.floor(0.6*user.maxhp);
+        let damage = -20 + Math.floor(0.6*target.maxhp);
         if (damage > 40) damage = 40;
         target.changehp(-damage);
         return typeText(`${user.name} swings an axe on ${target.name} for ${damage} damage!`, true);
@@ -388,11 +388,11 @@ function Washington() {
     this.attack2 = function(user, target) {
         if (user.special == 0) {
             target.changehp(-40);
-            user.special == 1;
+            user.special = 1;
             return typeText(`${user.name} fires a musket at ${target.name} for 40 damage!`, true);
         }
         else {
-            user.special == 0;
+            user.special = 0;
             return typeText(`${user.name} reloads their musket.`, true);
         }
     }
@@ -498,8 +498,38 @@ function setStartConditions() {
 
 function setOptionButtonFunctions() {
     const restartButton = $("#restart");
-
     restartButton.off("click").on("click", startNewGame);
+
+    const gameSpeedButtons = [$("#normal"), $("#fast"), $("#ultra")];
+    gameSpeedButtons[gameSpeed].css("background-color", "grey");
+    for (let i = 0; i < gameSpeedButtons.length; i++) {
+        gameSpeedButtons[i].off("mouseenter").on("mouseenter", function() {
+            gameSpeedButtons[i].css("background-color", "grey");
+        });
+        gameSpeedButtons[i].off("mouseleave").on("mouseleave", function() {
+            if (gameSpeed != i) gameSpeedButtons[i].css("background-color", "lightgrey");
+        });
+        gameSpeedButtons[i].off("click").on("click", function() {
+            changeGameSpeed(i);
+            for (let x = 0; x < gameSpeedButtons.length; x++) {
+                gameSpeedButtons[x].css("background-color", "lightgrey");
+            }
+            gameSpeedButtons[i].css("background-color", "grey");
+        });
+    }
+}
+
+function changeGameSpeed(speed) {
+    gameSpeed = speed;
+    if (speed == 0) {
+        textSpeed = 30;
+    }
+    else if (speed == 1) {
+        textSpeed = 15;
+    }
+    else {
+        textSpeed = 5;
+    }
 }
 
 function addAllEnemiesToPool() {
@@ -533,22 +563,38 @@ function typeText(message, newLine) {
     if (message.length > 0 && newLine) text.append("<br>>> ");
 
     for (let i = 0; i < message.length; i++) {
-        timeouts.push(setTimeout(function() {text.append(message[i]);}, i*textSpeed + specialCharDelay*textSpeed));
-        if (message[i] == '.' || message[i] == '?'|| message[i] == '!') specialCharDelay += 9;
+        timeouts.push(setTimeout(function() {text.append(message[i])}, i*textSpeed + specialCharDelay*textSpeed));
+        if (message[i] == '.' || message[i] == '?'|| message[i] == '!') {
+            if (i + 1 < message.length && (message[i + 1] == "\"" || message[i + 1] == "'")) {
+                i++;
+                let lastItem = timeouts.length - 1;
+                clearTimeout(timeouts[lastItem]);
+                timeouts[lastItem] = setTimeout(function() {text.append(message[i-1])}, (i-1)*textSpeed + specialCharDelay*textSpeed)
+                timeouts.push(setTimeout(function() {text.append(message[i])}, i*textSpeed + specialCharDelay*textSpeed));
+            }
+            specialCharDelay += 9;
+        }
         else if (message[i] == ',') specialCharDelay += 4;
     }
-
+    
     let messageLengthTime = message.length*textSpeed + specialCharDelay*textSpeed;
+    if (message.length > 0) timeouts.push(setTimeout(trimTextBox, messageLengthTime));
     return messageLengthTime;
 }
 
 function getTypeTextTime(message) {
     let specialCharDelay = 0;
+    let specialQuotes = 0;
     for (let i = 0; i < message.length; i++) {
-        if (message[i] == '.' || message[i] == '?' || message[i] == '!') specialCharDelay += 9;
+        if (message[i] == '.' || message[i] == '?' || message[i] == '!') {
+            if (i < message.length - 1 && (message[i + 1] == "\"" || message[i + 1] == "'")) {
+                specialQuotes++;
+            }
+            specialCharDelay += 9;
+        }
         else if (message[i] == ',') specialCharDelay += 4;
     }
-    let messageLengthTime = message.length*textSpeed + specialCharDelay*textSpeed;
+    let messageLengthTime = message.length*textSpeed + specialCharDelay*textSpeed - specialQuotes*textSpeed;
     return messageLengthTime;
 }
 
@@ -561,8 +607,13 @@ function replaceText(oldText, newText) {
 
 function clearTextBox() {
     const text = document.querySelector("#text");
-
     text.innerHTML = "";
+}
+
+function trimTextBox() {
+    let textBox = $("#text");
+    let textString = textBox.html();
+    if (textString.length > 1500) textBox.html(textString.substring(textString.length - 1500));
 }
 
 function displayNameEntry(display) {
@@ -582,6 +633,7 @@ function displayAreaSelection(pickedFights) {
     let areaSelectButtons = [$("#areaButton1"), $("#areaButton2"), $("#areaButton3")];
     for (let i = 0; i < 3; i++) {
         $(`#areaButton${i + 1}`).css("display", "none");
+        $(`#area${i + 1}`).css("display", "none");
     }
     for (let i = 0; i < pickedFights.length && i < 3; i++) {
         areaSelectButtons[i].html(pickedFights[i].quest);
@@ -592,14 +644,13 @@ function displayAreaSelection(pickedFights) {
         });
         // Setting image for area goes here
         $(`#areaButton${i + 1}`).css("display", "inline-block");
-        $("#areaSelectDisplay").css("display", "inline-block");
+        $(`#area${i + 1}`).css("display", "inline-block");
     }
     $("#areaSelectButtonContainer").css("display", "flex");
     $("#areaSelectDisplay").css("display", "flex");
 }
 
 function displayCurrentFighters(player, enemy) {
-    //console.log("display fighters");
     if (enemy == null) console.log("In no situation should there be a null enemy during a battle.");
     if (player == null) {
         $("#currentFighterName").html("...");
@@ -705,10 +756,12 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction) {
 
             $(`#party${i} *`).css("cursor", "pointer");
             $(`#party${i}`).on("click", function() {onClickFunction(currentFighter, party[i], enemy)});
+            $(`#party${i}`).on("mouseenter", function() {$(`#party${i}`).css("border", "1px solid black")});
             if (previewOnHover) $(`#party${i}`).on("mouseenter", function() {
                 displayBattleButtons(party[i], enemy, false);
                 displayCurrentFighters(party[i], enemy, false);
             });
+            $(`#party${i}`).on("mouseleave", function() {$(`#party${i}`).css("border", "3px solid black")});
         }
     }
 }
@@ -793,6 +846,9 @@ function gameOver() {
 }
 
 function damageAnimation(player, enemy, wasPlayerTurn) {
+    for (let i = 0; i < party.length; i++) {
+        party[i].displayhp = party[i].hp;
+    }
     displayCurrentFighters(player, enemy);
     displayParty(player, enemy, false, null);
     checkBattleStatus(player, enemy, wasPlayerTurn);
