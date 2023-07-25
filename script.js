@@ -230,7 +230,7 @@ function Bowers() {
         }
         else {
             target.changehp(target.maxhp);
-            message += ` ${target.name} was inspired deeply and healed fully`;
+            message += ` ${target.name} was inspired deeply and healed fully.`;
         }
         return typeText(message, true);
     }
@@ -389,7 +389,7 @@ function Washington() {
         if (user.special == 0) {
             target.changehp(-40);
             user.special == 1;
-            return typeText(`${user.name} fires a musket at ${target.name} for ${damage} damage!`, true);
+            return typeText(`${user.name} fires a musket at ${target.name} for 40 damage!`, true);
         }
         else {
             user.special == 0;
@@ -493,12 +493,13 @@ function setStartConditions() {
     displayNameEntry(false);
     displayAreaSelection([]);
     hideBattleButtons();
+    hideCurrentFighters();
 }
 
 function setOptionButtonFunctions() {
-    const restartButton = document.querySelector("#restart");
+    const restartButton = $("#restart");
 
-    restartButton.onclick = function() {startNewGame()};
+    restartButton.off("click").on("click", startNewGame);
 }
 
 function addAllEnemiesToPool() {
@@ -509,6 +510,8 @@ function addAllEnemiesToPool() {
     const bowers = new Bowers(); bowers.refresh(); fightPool.push(bowers);
     const chief = new Chief(); chief.refresh(); fightPool.push(chief);
     const lennie = new Lennie(); lennie.refresh(); fightPool.push(lennie);
+    const shrek = new Shrek(); shrek.refresh(); fightPool.push(shrek);
+    const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
 }
 
@@ -572,23 +575,61 @@ function displayAreaSelection(pickedFights) {
     clearAllTimeouts();
     if (pickedFights.length < 1) {
         $("#areaSelectButtonContainer").css("display", "none");
+        $("#areaSelectDisplay").css("display", "none");
         return;
     }
 
-    let areaSelectButtons = [document.querySelector("#areaButton1"), document.querySelector("#areaButton2"), document.querySelector("#areaButton3")];
+    let areaSelectButtons = [$("#areaButton1"), $("#areaButton2"), $("#areaButton3")];
     for (let i = 0; i < 3; i++) {
         $(`#areaButton${i + 1}`).css("display", "none");
     }
     for (let i = 0; i < pickedFights.length && i < 3; i++) {
-        areaSelectButtons[i].textContent = pickedFights[i].quest;
-        areaSelectButtons[i].onclick = function() {
+        areaSelectButtons[i].html(pickedFights[i].quest);
+        areaSelectButtons[i].off("click").on("click", function () {
             displayAreaSelection([]);
             removeEnemyFromPool(pickedFights[i]);
             enemyEntrance(pickedFights[i]);
-        }
+        });
+        // Setting image for area goes here
         $(`#areaButton${i + 1}`).css("display", "inline-block");
+        $("#areaSelectDisplay").css("display", "inline-block");
     }
-    $("#areaSelectButtonContainer").css("display", "block");
+    $("#areaSelectButtonContainer").css("display", "flex");
+    $("#areaSelectDisplay").css("display", "flex");
+}
+
+function displayCurrentFighters(player, enemy) {
+    //console.log("display fighters");
+    if (enemy == null) console.log("In no situation should there be a null enemy during a battle.");
+    if (player == null) {
+        $("#currentFighterName").html("...");
+        $("#currentFighterDesc").html("...");
+        $("#currentFighterPicture").attr("src", "characterPictures/empty character.png");
+        $("#currentFighterBarLabel").html("");
+        $("#currentFighterBar").css("width", "0");
+    }
+    else {
+        $("#currentFighterName").html(player.name);
+        $("#currentFighterDesc").html(player.description);
+        $("#currentFighterPicture").attr("src", player.picture);
+        let displayhp = player.displayhp; let maxhp = player.maxhp;
+        let healthBarColor = getHealthBarColor(displayhp, maxhp);
+        $("#currentFighterBarLabel").html(`${displayhp}/${maxhp}`);
+        $("#currentFighterBar").css({"width":`${100*displayhp/maxhp}%`,"background-color":healthBarColor});
+    }
+    $("#currentEnemyName").html(enemy.name);
+    $("#currentEnemyDesc").html(enemy.description);
+    $("#currentEnemyPicture").attr("src", enemy.picture);
+    let displayhp = enemy.displayhp; let maxhp = enemy.maxhp;
+    let healthBarColor = getHealthBarColor(displayhp, maxhp);
+    $("#currentEnemyBarLabel").html(`${displayhp}/${maxhp}`);
+    $("#currentEnemyBar").css({"width":`${100*displayhp/maxhp}%`,"background-color":healthBarColor});
+
+    $("#battleDisplay").css("display", "grid");
+}
+
+function hideCurrentFighters() {
+    $("#battleDisplay").css("display", "none");
 }
 
 function displayBattleButtons(fighter, enemy, setButtonFunctions) {
@@ -655,13 +696,19 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction) {
     $("#partyList").html(partyDivContents);
 
     if (onClickFunction != null) {
-        if (previewOnHover) $(".partyMemberContainer").on("mouseleave", function() {displayBattleButtons(currentFighter, enemy, true)});
+        if (previewOnHover) $(".partyMemberContainer").on("mouseleave", function() {
+            displayBattleButtons(currentFighter, enemy, true);
+            displayCurrentFighters(currentFighter, enemy);
+        });
         for (let i = 0; i < party.length; i++) {
             if (currentFighter != null && party[i] == currentFighter) continue;
 
             $(`#party${i} *`).css("cursor", "pointer");
             $(`#party${i}`).on("click", function() {onClickFunction(currentFighter, party[i], enemy)});
-            if (previewOnHover) $(`#party${i}`).on("mouseover", function() {displayBattleButtons(party[i], enemy, false)});
+            if (previewOnHover) $(`#party${i}`).on("mouseenter", function() {
+                displayBattleButtons(party[i], enemy, false);
+                displayCurrentFighters(party[i], enemy, false);
+            });
         }
     }
 }
@@ -746,11 +793,13 @@ function gameOver() {
 }
 
 function damageAnimation(player, enemy, wasPlayerTurn) {
+    displayCurrentFighters(player, enemy);
+    displayParty(player, enemy, false, null);
     checkBattleStatus(player, enemy, wasPlayerTurn);
 }
 
 function playerTurn(player, enemy) {
-    if (player != null && enemy != null) console.log(player.hp, enemy.hp);
+    displayCurrentFighters(player, enemy);
     if (player == null) {
         displayParty(player, enemy, true, changeCharacterPlayerFirst);
         displayBattleButtons(player, enemy, true);
@@ -768,7 +817,7 @@ function playerTurn(player, enemy) {
 }
 
 function enemyTurn(player, enemy) {
-    if (player != null && enemy != null) console.log(player.hp, enemy.hp);
+    displayCurrentFighters(player, enemy);
     displayParty(player, enemy, false, null);
     if (enemy.charging == 0) {
         let randAttack = Math.floor(Math.random() * 2);
@@ -827,8 +876,9 @@ function askForNameAndDescription() {
 
 function areaSelect() {
     displayParty(null, null, false, null);
+    hideCurrentFighters();
     let message = "What an exhilarating battle! You're not done yet, though. There are still opponents to be conquered. What will you do next?";
-    if (fightPool.length == 7) { // Display different message for if the game has just started.
+    if (fightPool.length == 9) { // Display different message for if the game has just started.
         message = "There comes a time in every man's life when they must embark on an epic quest to defeat numerous people."
         + " Today, " + playerName + " begins their quest. The " + playerDesc + " walks outside their house. They consider their options.";
     }
