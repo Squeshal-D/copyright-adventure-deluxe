@@ -348,7 +348,7 @@ function Shrek() {
         let message2Time = getTypeTextTime(message2);
         const missChance = 0.5;
         
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 5; i++) {
             shots++;
             if (Math.random() > missChance) {
                 hits++;
@@ -491,7 +491,7 @@ function setStartConditions() {
     addAllEnemiesToPool();
     clearTextBox();
     displayNameEntry(false);
-    displayAreaSelection([]);
+    displayAreaSelection([], 0);
     hideBattleButtons();
     hideCurrentFighters();
 }
@@ -529,6 +529,25 @@ function changeGameSpeed(speed) {
     }
     else {
         textSpeed = 5;
+    }
+}
+
+function binaryAnimation() {
+    let playerTurnIcon = $("#currentFighterTurnIcon");
+    let enemyTurnIcon = $("#currentEnemyTurnIcon");
+    tick(true);
+
+    function tick(state) {
+        if (state) {
+            playerTurnIcon.css("margin-top", "5%");
+            enemyTurnIcon.css("margin-top", "5%");
+            setTimeout(tick, 500, false);
+        }
+        else {
+            playerTurnIcon.css("margin-top", "15%");
+            enemyTurnIcon.css("margin-top", "15%");
+            setTimeout(tick, 500, true);
+        }
     }
 }
 
@@ -622,32 +641,41 @@ function displayNameEntry(display) {
 }
 
 // To hide area selection buttons, call this with an empty array as parameter
-function displayAreaSelection(pickedFights) {
+function displayAreaSelection(allFights, offset) {
     clearAllTimeouts();
-    if (pickedFights.length < 1) {
+    if (allFights.length < 1) {
         $("#areaSelectButtonContainer").css("display", "none");
         $("#areaSelectDisplay").css("display", "none");
         return;
     }
 
+    let currentOffset = offset;
     let areaSelectButtons = [$("#areaButton1"), $("#areaButton2"), $("#areaButton3")];
+    let areaSwapButtons = [$("#areaLeft"), $("#areaRight")];
+    let areaPictures = [$("#area1"), $("#area2"), $("#area3")];
     for (let i = 0; i < 3; i++) {
-        $(`#areaButton${i + 1}`).css("display", "none");
-        $(`#area${i + 1}`).css("display", "none");
+        if (i < 2) areaSwapButtons[i].css("display", "none");
+        areaSelectButtons[i].css("display", "none");
+        areaPictures[i].css("display", "none");
     }
-    for (let i = 0; i < pickedFights.length && i < 3; i++) {
-        areaSelectButtons[i].html(pickedFights[i].quest);
-        areaSelectButtons[i].off("click").on("click", function () {
-            displayAreaSelection([]);
-            removeEnemyFromPool(pickedFights[i]);
-            enemyEntrance(pickedFights[i]);
+    areaSwapButtons[0].off("click").on("click", function() {displayAreaSelection(allFights, offset - 3)});
+    areaSwapButtons[1].off("click").on("click", function() {displayAreaSelection(allFights, offset + 3)});
+    
+    for (let i = currentOffset; i < currentOffset + 3 && i < allFights.length; i++) {
+        areaSelectButtons[i%3].html(allFights[i].quest);
+        areaSelectButtons[i%3].off("click").on("click", function () {
+            displayAreaSelection([], 0);
+            enemyEntrance(allFights[i]);
+            removeEnemyFromPool(allFights[i]);
         });
         // Setting image for area goes here
-        $(`#areaButton${i + 1}`).css("display", "inline-block");
-        $(`#area${i + 1}`).css("display", "inline-block");
+        areaSelectButtons[i%3].css("display", "block");
+        areaPictures[i%3].css("display", "block");
     }
-    $("#areaSelectButtonContainer").css("display", "flex");
-    $("#areaSelectDisplay").css("display", "flex");
+    if (currentOffset - 3 >= 0) areaSwapButtons[0].css("display", "block");
+    if (currentOffset + 3 < allFights.length) areaSwapButtons[1].css("display", "block");
+    $("#areaSelectButtonContainer").css("display", "grid");
+    $("#areaSelectDisplay").css("display", "grid");
 }
 
 function displayCurrentFighters(player, enemy) {
@@ -681,6 +709,19 @@ function displayCurrentFighters(player, enemy) {
 
 function hideCurrentFighters() {
     $("#battleDisplay").css("display", "none");
+}
+
+function displayTurnIndicator(isPlayerTurn) {
+    const playerIndicator = $("#currentFighterTurnIcon");
+    const enemyIndicator = $("#currentEnemyTurnIcon");
+    if (isPlayerTurn) {
+        playerIndicator.css("display", "block");
+        enemyIndicator.css("display", "none");
+    }
+    else {
+        playerIndicator.css("display", "none");
+        enemyIndicator.css("display", "block");
+    }
 }
 
 function displayBattleButtons(fighter, enemy, setButtonFunctions) {
@@ -750,6 +791,7 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction) {
         if (previewOnHover) $(".partyMemberContainer").on("mouseleave", function() {
             displayBattleButtons(currentFighter, enemy, true);
             displayCurrentFighters(currentFighter, enemy);
+            displayTurnIndicator(true);
         });
         for (let i = 0; i < party.length; i++) {
             if (currentFighter != null && party[i] == currentFighter) continue;
@@ -760,6 +802,8 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction) {
             if (previewOnHover) $(`#party${i}`).on("mouseenter", function() {
                 displayBattleButtons(party[i], enemy, false);
                 displayCurrentFighters(party[i], enemy, false);
+                if (currentFighter == null) displayTurnIndicator(true);
+                else displayTurnIndicator(false);
             });
             $(`#party${i}`).on("mouseleave", function() {$(`#party${i}`).css("border", "3px solid black")});
         }
@@ -849,6 +893,7 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
     for (let i = 0; i < party.length; i++) {
         party[i].displayhp = party[i].hp;
     }
+    enemy.displayhp = enemy.hp;
     displayCurrentFighters(player, enemy);
     displayParty(player, enemy, false, null);
     checkBattleStatus(player, enemy, wasPlayerTurn);
@@ -856,6 +901,7 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
 
 function playerTurn(player, enemy) {
     displayCurrentFighters(player, enemy);
+    displayTurnIndicator(true);
     if (player == null) {
         displayParty(player, enemy, true, changeCharacterPlayerFirst);
         displayBattleButtons(player, enemy, true);
@@ -874,6 +920,7 @@ function playerTurn(player, enemy) {
 
 function enemyTurn(player, enemy) {
     displayCurrentFighters(player, enemy);
+    displayTurnIndicator(false);
     displayParty(player, enemy, false, null);
     if (enemy.charging == 0) {
         let randAttack = Math.floor(Math.random() * 2);
@@ -940,14 +987,7 @@ function areaSelect() {
     }
 
     if (fightPool.length > 0) {
-        let potentialFights = fightPool.slice();
-        let pickedFights = [];
-        for (let i = 0; i < 3 && potentialFights.length > 0; i++) {
-            let randInt = Math.floor(Math.random()*potentialFights.length);
-            pickedFights.push(potentialFights[randInt]);
-            potentialFights.splice(randInt, 1);
-        }
-        timeouts.push(setTimeout(displayAreaSelection, typeText(message, true), pickedFights));
+        timeouts.push(setTimeout(displayAreaSelection, typeText(message, true), fightPool, 0));
     }
 }
                                         // Main Functions
@@ -958,5 +998,6 @@ function startNewGame() {
 
 $(function() {
     setOptionButtonFunctions();
+    binaryAnimation();
     startNewGame();
 })

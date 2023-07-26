@@ -29,6 +29,7 @@
             <div id="battleDisplay">
                 <div id="battleDisplayTopColor"></div>
 
+                <img class="turnIndicator" id="currentFighterTurnIcon" src="icons/small arrow.png"></img>
                 <label class="battleName" id="currentFighterName">...</label>
                 <label class="battleDesc" id="currentFighterDesc">...</label>
                 <img class="battlePicture" id="currentFighterPicture" src="characterPictures/empty character.png"></img>
@@ -36,6 +37,7 @@
                 <div class="progressBar" id="currentFighterBar" style="background-color:lightgreen;"></div>
                 <label class="progressBarLabel" id="currentFighterBarLabel">0/0</label>
 
+                <img class="turnIndicator" id="currentEnemyTurnIcon" src="icons/small arrow.png"></img>
                 <label class="battleName" id="currentEnemyName">...</label>
                 <label class="battleDesc" id="currentEnemyDesc">...</label>
                 <img class="battlePicture" id="currentEnemyPicture" src="characterPictures/empty character.png"></img>
@@ -62,6 +64,9 @@
                 <button type="button" class="areaSelect" id="areaButton1"></button>
                 <button type="button" class="areaSelect" id="areaButton2"></button>
                 <button type="button" class="areaSelect" id="areaButton3"></button>
+
+                <button type="button" class="areaSwap" id="areaLeft">&lt;Prev</button>
+                <button type="button" class="areaSwap" id="areaRight">Next&gt;</button>
             </div>
 
             <div id="battleButtonContainer">
