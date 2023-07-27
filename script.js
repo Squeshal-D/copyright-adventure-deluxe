@@ -12,14 +12,13 @@ function Character() {
     this.description = playerDesc;
     this.quest = "";
     this.entrance = "";
-    this.picture = "cad icon.png";
+    this.picture = "icons/cad icon.png";
     this.maxhp = 50;
     this.hp = 50;
     this.displayhp = 50;
 
     this.boss = false;
     this.charging = 0;
-    this.special = 0;  // miscellaneous integer for any complex move that may need it
 
     this.move1name = "Punch";
     this.move1desc = "How normal. <br>(15-25 dmg)";
@@ -36,7 +35,6 @@ function Character() {
         this.hp = this.maxhp;
         this.displayhp = this.maxhp;
         this.charging = 0;
-        this.special = 0;
     }
 
     this.afterFight = function() {
@@ -49,6 +47,10 @@ function Character() {
         return typeText(`${user.name} punches ${target.name} for ${randInt} damage!`, true);
     }
 
+    this.attack1Info = function(user, target) {
+        return "";
+    }
+
     this.attack2 = function(user, target) {
         let randInt = Math.floor(Math.random() * 2);
         if (randInt == 1) {
@@ -56,6 +58,10 @@ function Character() {
             return typeText(`Bowers senses the vape and springs out of nowhere! He annihilates ${target.name} for 30 dmg!`, true);
         }
         else return typeText(`${user.name} vapes undisturbed. ${target.name} is jealous.`, true);
+    }
+
+    this.attack2Info = function(user, target) {
+        return "";
     }
 }
 
@@ -152,7 +158,12 @@ function Wick() {
             return typeText(`${user.name} snaps ${target.name}'s neck!`, true);
         }
         else return typeText(`${user.name} only manages to turn ${target.name}'s head.`, true);
-        
+    }
+
+    this.attack2Info = function(user, target) {
+        let chance = Math.floor(1000/target.hp);
+        if (chance > 100) chance = 100;
+        return `(${chance}% kill)`
     }
 }
 
@@ -165,7 +176,7 @@ function Derrek() {
     this.entrance = "You go up to Derrek's house and knock on the door. Derrek's mom answers the door. She is very nice, and you ask her if Derrek is home."
         + " She invites you in and gives you some hot cocoa. You are rudely interrupted by Derrek, though. You put down the cocoa and tell Derrek's mom, "
         + " \"Sorry, but I'm going to have to kick your son's bootay.\"";
-    this.maxhp = 50;
+    this.maxhp = 60;
 
     this.move1name = "Baseball Smash";
     this.move1desc = "A joke Derrek and I have. <br>(15 dmg) <br>Finishes an enemy that's 30 hp or lower.";
@@ -209,7 +220,9 @@ function Bowers() {
     this.move1name = "Ambush";
     this.move1desc = "You can never expect it. <br>(15 dmg) <br>(30 dmg) on full hp opponents.";
     this.move2name = "Words of Encouragement";
-    this.move2desc = "Word Diarrhea. <br>20% chance to defeat the opponent. <br>Otherwise, fully heals the opponent.";
+    this.move2desc = "Word Diarrhea. <br>Heals enemy (+15 hp) on first two uses. Claps enemy (120 dmg) on third use.";
+
+    this.spokenTo = [];
 
     this.attack1 = function(user, target) {
         if (target.hp == target.maxhp) {
@@ -223,16 +236,29 @@ function Bowers() {
     }
 
     this.attack2 = function(user, target) {
+        let spokenToEnemy = 0;
+        for (let i = 0; i < user.spokenTo.length; i++) if (user.spokenTo[i] == target) spokenToEnemy++;
         let message = `${user.name} spread words of encouragement.`;
-        if (Math.floor(Math.random()*5) == 0) {
-            target.changehp(-target.hp);
-            message += ` ${target.name} couldn't stand the cheesy dialogue and died.`;
+        if (spokenToEnemy%3 == 0) {
+            target.changehp(10);
+            message += ` ${target.name} was inspired deeply and healed 10 hp.`;
+        }
+        else if (spokenToEnemy%3 == 1) {
+            target.changehp(10);
+            message += ` ${target.name} was inspired a little and healed 10 hp.`;
         }
         else {
-            target.changehp(target.maxhp);
-            message += ` ${target.name} was inspired deeply and healed fully.`;
+            target.changehp(-150);
+            message += ` ${target.name} was so annoyed that they got CLAPPED for 120 damage!`;
         }
+        user.spokenTo.push(target);
         return typeText(message, true);
+    }
+
+    this.attack2Info = function(user, target) {
+        let spokenToEnemy = 0;
+        for (let i = 0; i < user.spokenTo.length; i++) if (user.spokenTo[i] == target) spokenToEnemy++;
+        return `(${spokenToEnemy%3 + 1} / 3)`
     }
 }
 
@@ -307,10 +333,20 @@ function Lennie() {
         return typeText(`${user.name} pulls on ${target.name}'s hair for ${damage} damage!`, true);
     }
 
+    this.attack1Info = function(user, target) {
+        let damage = 40 - Math.floor(40*user.hp/user.maxhp);
+        return `(${damage} dmg)`
+    }
+
     this.attack2 = function(user, target) {
         let damage = Math.floor(1250/target.maxhp);
         target.changehp(-damage);
         return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`, true);
+    }
+
+    this.attack2Info = function(user, target) {
+        let damage = Math.floor(1250/target.maxhp);
+        return `(${damage} dmg)`
     }
 }
 
@@ -325,7 +361,7 @@ function Shrek() {
     this.maxhp = 80;
 
     this.move1name = "Shrek Superslam";
-    this.move1desc = "Wombo Combo. <br>(5 dmg) <br>+5 extra damage per party member.";
+    this.move1desc = "Wombo Combo. <br>(4 dmg) <br>+4 extra damage per party member.";
     this.move2name = "Onion Onslaught";
     this.move2desc = "O n i o n. <br>Throw 5 onions. <br>50% chance to hit an onion (6 dmg).";
 
@@ -334,9 +370,14 @@ function Shrek() {
         if (!party.includes(user)) allies = Math.floor(Math.random()*5);
         else allies = party.length - 1;
 
-        let damage = 5*(allies + 1);
+        let damage = 4*(allies + 1);
         target.changehp(-damage);
         return typeText(`${user.name} calls upon ${allies} allies and executes a Wombo Combo on ${target.name} for ${damage} damage!`, true);
+    }
+
+    this.attack1Info = function(user, target) {
+        let damage = party.length * 4;
+        return `(${damage} dmg)`;
     }
 
     this.attack2 = function(user, target) {
@@ -378,6 +419,15 @@ function Washington() {
     this.move2name = "Musket Blast";
     this.move2desc = "Go Minuteman mode. <br>(40 dmg) <br>Must reload after firing.";
 
+    this.musketLoaded = true;
+
+    this.refresh = function() {
+        this.hp = this.maxhp;
+        this.displayhp = this.maxhp;
+        this.charging = 0;
+        this.musketLoaded = true;
+    }
+
     this.attack1 = function(user, target) {
         let damage = -20 + Math.floor(0.6*target.maxhp);
         if (damage > 40) damage = 40;
@@ -385,16 +435,27 @@ function Washington() {
         return typeText(`${user.name} swings an axe on ${target.name} for ${damage} damage!`, true);
     }
 
+    this.attack1Info = function(user, target) {
+        let damage = -20 + Math.floor(0.6*target.maxhp);
+        if (damage > 40) damage = 40;
+        return `(${damage} dmg)`
+    }
+
     this.attack2 = function(user, target) {
-        if (user.special == 0) {
+        if (user.musketLoaded) {
             target.changehp(-40);
-            user.special = 1;
+            user.musketLoaded = false;
             return typeText(`${user.name} fires a musket at ${target.name} for 40 damage!`, true);
         }
         else {
-            user.special = 0;
+            user.musketLoaded = true;
             return typeText(`${user.name} reloads their musket.`, true);
         }
+    }
+
+    this.attack2Info = function(user, target) {
+        if (user.musketLoaded) return "(ready)";
+        else return "(reload)";
     }
 }
 
@@ -411,12 +472,28 @@ function Ramsay() {
     this.move1name = "Pan Slam";
     this.move1desc = "Very unoriginal. <br>(15 dmg)";
     this.move2name = "Gordonmet";
-    this.move2desc = "Exquisitely gourmet. <br>Cook a meal for Gordon or a teammate (+20 hp)!";
+    this.move2desc = "Exquisitely gourmet. <br>Heal Gordon or a teammate! <br>(+20 hp) (5 uses/battle)";
+
+    this.meals = 5;
+
+    this.refresh = function() {
+        this.hp = this.maxhp;
+        this.displayhp = this.maxhp;
+        this.charging = 0;
+        this.meals = 5;
+    }
+
+    this.afterFight = function() {
+        this.charging = 0;
+        this.meals = 5;
+    }
 
     function clickToHeal(currentFighter, thisPartyMember, enemy) {
-        displayParty(currentFighter, enemy, false, null);
+        this.icon = "icons/heal icon.png";
+        displayParty(currentFighter, enemy, false, null, null);
         hideBattleButtons();
         thisPartyMember.changehp(20);
+        currentFighter.meals--;
         let message = `${currentFighter.name} cooks a gourmet meal for ${thisPartyMember.name}. They recover 20 hp.`;
         timeouts.push(setTimeout(damageAnimation, typeText(message, true), currentFighter, enemy, true));
         ramsaySetDefault(currentFighter);
@@ -447,28 +524,47 @@ function Ramsay() {
 
     function alteredAttack1(user, target) {
         user.changehp(20);
+        user.meals--;
         ramsaySetDefault(user);
         return typeText(`${user.name} cooks a gourmet meal for themself. They recover 20 hp.`, true);
     }
 
+    this.attack1Info = function(user, target) {
+        if (user.move1name == "Heal Self") return `(${user.meals} left)`;
+        return "";
+    }
+
     function defaultAttack2(user, target) {
         if (!party.includes(user)) {
+            if (user.meals < 1) return defaultAttack1(user, target);
             user.changehp(20);
+            user.meals--;
             return typeText(`${user.name} cooks a gourmet meal for themself. They recover 20 hp.`, true);
         }
         else {
-            displayParty(user, target, false, clickToHeal);
-            ramsaySetAltered(user);
-            displayBattleButtons(user, target, true);
+            if (user.meals > 0) {
+                displayParty(user, target, false, clickToHeal, "icons/heal icon.png");
+                ramsaySetAltered(user);
+                displayBattleButtons(user, target, true);
+            }
+            else {
+                displayParty(user, target, true, changeCharacterEnemyFirst, "icons/switch icon.png");
+                displayBattleButtons(user, target, true);
+            }
         }
         return 9999999999;
     }
 
     function alteredAttack2(user, target) {
-        displayParty(user, target, true, changeCharacterEnemyFirst);
+        displayParty(user, target, true, changeCharacterEnemyFirst, "icons/switch icon.png");
         ramsaySetDefault(user);
         displayBattleButtons(user, target, true);
         return 9999999999;
+    }
+
+    this.attack2Info = function(user, target) {
+        if (user.move2name == "Gordonmet") return `(${user.meals} left)`;
+        return "";
     }
 
     this.attack1 = defaultAttack1;
@@ -487,7 +583,7 @@ function clearAllTimeouts() {
 function setStartConditions() {
     clearAllTimeouts();
     party = [];
-    displayParty(null, null, false, null);
+    displayParty(null, null, false, null, null);
     addAllEnemiesToPool();
     clearTextBox();
     displayNameEntry(false);
@@ -533,19 +629,21 @@ function changeGameSpeed(speed) {
 }
 
 function binaryAnimation() {
-    let playerTurnIcon = $("#currentFighterTurnIcon");
-    let enemyTurnIcon = $("#currentEnemyTurnIcon");
+    const playerTurnIcon = $("#currentFighterTurnIcon");
+    const enemyTurnIcon = $("#currentEnemyTurnIcon");
     tick(true);
 
     function tick(state) {
         if (state) {
             playerTurnIcon.css("margin-top", "5%");
             enemyTurnIcon.css("margin-top", "5%");
+            $("#partyListIcon").css("margin-bottom", "5%");
             setTimeout(tick, 500, false);
         }
         else {
             playerTurnIcon.css("margin-top", "15%");
             enemyTurnIcon.css("margin-top", "15%");
+            $("#partyListIcon").css("margin-bottom", "15%");
             setTimeout(tick, 500, true);
         }
     }
@@ -727,6 +825,8 @@ function displayTurnIndicator(isPlayerTurn) {
 function displayBattleButtons(fighter, enemy, setButtonFunctions) {
     buttons = [$("#attack1button"), $("#attack2button")];
     labels = [$("#attack1label"), $("#attack2label")];
+    buttons[0].off("mouseenter");
+    buttons[1].off("mouseenter");
 
     if (fighter == null) {   
         buttons[0].html("");
@@ -735,8 +835,10 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
         labels[1].html("");
 
         if (setButtonFunctions) {
-            buttons[0].off("click");
-            buttons[1].off("click");
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].off("click");
+                buttons[i].css("cursor", "default");
+            }
         }
     }
 
@@ -746,15 +848,26 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
         labels[0].html(fighter.move1desc);
         labels[1].html(fighter.move2desc);
 
+        infos = [fighter.attack1Info(fighter, enemy), fighter.attack2Info(fighter, enemy)];
+        for (let i = 0; i < infos.length; i++) {
+            if (infos[i] != "") buttons[i].append(`<br>${infos[i]}`);
+        }
+
+        for (let i = 0; i < buttons.length; i++) {
+            buttons[i].on("mouseenter", function() {buttons[i].css("border", "1px solid black")});
+            buttons[i].on("mouseleave", function() {buttons[i].css("border", "3px solid black")});
+            buttons[i].css("cursor", "pointer");
+        }
+
         if (setButtonFunctions) {
             buttons[0].off("click").on("click", function() {
                 hideBattleButtons(); 
-                displayParty(fighter, enemy, false, null);
+                displayParty(fighter, enemy, false, null, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true));
             });
             buttons[1].off("click").on("click", function() {
                 hideBattleButtons(); 
-                displayParty(fighter, enemy, false, null);
+                displayParty(fighter, enemy, false, null, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack2(fighter, enemy), fighter, enemy, true));
             });
         }
@@ -767,9 +880,9 @@ function hideBattleButtons() {
 }
                                         // Game Logic/Flow Functions
 // Enter 'null' as onClickFunction if you want the buttons to do nothing
-function displayParty(currentFighter, enemy, previewOnHover, onClickFunction) {
+function displayParty(currentFighter, enemy, previewOnHover, onClickFunction, icon) {
     $("#partyMemberContainer").off("mouseleave");
-    let partyDivContents = "";
+    let partyDivContents = "";  
     for (let i = 0; i < party.length; i++) {
         $(`#party${i}`).off();
         $(`#party${i} *`).css("cursor", "default");
@@ -785,6 +898,13 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction) {
             <label class="partyName">${party[i].name}</label>
         </div>`;
     }
+    if (icon != null && partyDivContents != "") {
+        partyDivContents =
+        `<div id="partyListIconContainer">
+            <img id="partyListIcon" src="${icon}" style="margin-bottom: ${$("#currentEnemyTurnIcon").css("margin-top")};"></img>
+        </div>` + partyDivContents;
+    }
+
     $("#partyList").html(partyDivContents);
 
     if (onClickFunction != null) {
@@ -811,13 +931,15 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction) {
 }
 
 function changeCharacterPlayerFirst(currentFighter, thisPartyMember, enemy) {
-    displayParty(thisPartyMember, enemy, false, null);
+    this.icon = "icons/switch icon.png";
+    displayParty(thisPartyMember, enemy, false, null, null);
     hideBattleButtons();
     timeouts.push(setTimeout(playerTurn, typeText(`${thisPartyMember.name} enters the ring!`, true), thisPartyMember, enemy));
 }
 
 function changeCharacterEnemyFirst(currentFighter, thisPartyMember, enemy) {
-    displayParty(thisPartyMember, enemy, false, null);
+    this.icon = "icons/switch icon.png";
+    displayParty(thisPartyMember, enemy, false, null, null);
     hideBattleButtons();
     timeouts.push(setTimeout(enemyTurn, typeText(`${thisPartyMember.name} takes ${currentFighter.name}'s place.`, true), thisPartyMember, enemy));
 }
@@ -895,7 +1017,7 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
     }
     enemy.displayhp = enemy.hp;
     displayCurrentFighters(player, enemy);
-    displayParty(player, enemy, false, null);
+    displayParty(player, enemy, false, null, null);
     checkBattleStatus(player, enemy, wasPlayerTurn);
 }
 
@@ -903,15 +1025,15 @@ function playerTurn(player, enemy) {
     displayCurrentFighters(player, enemy);
     displayTurnIndicator(true);
     if (player == null) {
-        displayParty(player, enemy, true, changeCharacterPlayerFirst);
+        displayParty(player, enemy, true, changeCharacterPlayerFirst, "icons/switch icon.png");
         displayBattleButtons(player, enemy, true);
     } 
     else if (player.charging == 0) {
-        displayParty(player, enemy, true, changeCharacterEnemyFirst);
+        displayParty(player, enemy, true, changeCharacterEnemyFirst, "icons/switch icon.png");
         displayBattleButtons(player, enemy, true);
     }
     else {
-        displayParty(player, enemy, false, null);
+        displayParty(player, enemy, false, null, null);
         if (player.charging == 1) timeouts.push(setTimeout(damageAnimation, player.attack1(player, enemy), player, enemy, true));
         else timeouts.push(setTimeout(damageAnimation, player.attack2(player, enemy), player, enemy, true));
     }
@@ -921,7 +1043,7 @@ function playerTurn(player, enemy) {
 function enemyTurn(player, enemy) {
     displayCurrentFighters(player, enemy);
     displayTurnIndicator(false);
-    displayParty(player, enemy, false, null);
+    displayParty(player, enemy, false, null, null);
     if (enemy.charging == 0) {
         let randAttack = Math.floor(Math.random() * 2);
         if (randAttack == 0) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
@@ -978,7 +1100,7 @@ function askForNameAndDescription() {
 }
 
 function areaSelect() {
-    displayParty(null, null, false, null);
+    displayParty(null, null, false, null, null);
     hideCurrentFighters();
     let message = "What an exhilarating battle! You're not done yet, though. There are still opponents to be conquered. What will you do next?";
     if (fightPool.length == 9) { // Display different message for if the game has just started.
