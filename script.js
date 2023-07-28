@@ -1,5 +1,6 @@
 var gameSpeed = 0;  // 0-2, 2 is fastest
 var textSpeed = 30;
+var damageSpeed = 1000;
 var playerName = "";
 var playerDesc = "";
 var timeouts = [];
@@ -619,12 +620,15 @@ function changeGameSpeed(speed) {
     gameSpeed = speed;
     if (speed == 0) {
         textSpeed = 30;
+        damageSpeed = 1000;
     }
     else if (speed == 1) {
         textSpeed = 15;
+        damageSpeed = 500;
     }
     else {
         textSpeed = 5;
+        damageSpeed = 250;
     }
 }
 
@@ -660,6 +664,7 @@ function addAllEnemiesToPool() {
     const shrek = new Shrek(); shrek.refresh(); fightPool.push(shrek);
     const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
+    party.push(ramsay); party.push(shrek); party.push(lennie);
 }
 
 function removeEnemyFromPool(enemy) {
@@ -740,7 +745,6 @@ function displayNameEntry(display) {
 
 // To hide area selection buttons, call this with an empty array as parameter
 function displayAreaSelection(allFights, offset) {
-    clearAllTimeouts();
     if (allFights.length < 1) {
         $("#areaSelectButtonContainer").css("display", "none");
         $("#areaSelectDisplay").css("display", "none");
@@ -791,7 +795,7 @@ function displayCurrentFighters(player, enemy) {
         $("#currentFighterPicture").attr("src", player.picture);
         let displayhp = player.displayhp; let maxhp = player.maxhp;
         let healthBarColor = getHealthBarColor(displayhp, maxhp);
-        $("#currentFighterBarLabel").html(`${displayhp}/${maxhp}`);
+        $("#currentFighterBarLabel").html(`${Math.floor(displayhp)}/${maxhp}`);
         $("#currentFighterBar").css({"width":`${100*displayhp/maxhp}%`,"background-color":healthBarColor});
     }
     $("#currentEnemyName").html(enemy.name);
@@ -799,7 +803,7 @@ function displayCurrentFighters(player, enemy) {
     $("#currentEnemyPicture").attr("src", enemy.picture);
     let displayhp = enemy.displayhp; let maxhp = enemy.maxhp;
     let healthBarColor = getHealthBarColor(displayhp, maxhp);
-    $("#currentEnemyBarLabel").html(`${displayhp}/${maxhp}`);
+    $("#currentEnemyBarLabel").html(`${Math.floor(displayhp)}/${maxhp}`);
     $("#currentEnemyBar").css({"width":`${100*displayhp/maxhp}%`,"background-color":healthBarColor});
 
     $("#battleDisplay").css("display", "grid");
@@ -893,8 +897,8 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction, ic
         `<div class="partyMemberContainer" id="party${i}">
             <img src="${party[i].picture}"></img>
             <div class="progressBarBackground" style="background-color:whitesmoke;"></div>
-            <div class="progressBar" id="progress${i}" style="background-color:${healthBarColor}; width:calc(100% * ${party[i].displayhp}/${party[i].maxhp});"></div>
-            <label class="progressBarLabel">${party[i].displayhp}/${party[i].maxhp}</label>
+            <div class="progressBar" style="background-color:${healthBarColor}; width:calc(100% * ${party[i].displayhp}/${party[i].maxhp});"></div>
+            <label class="progressBarLabel">${Math.floor(party[i].displayhp)}/${party[i].maxhp}</label>
             <label class="partyName">${party[i].name}</label>
         </div>`;
     }
@@ -945,8 +949,12 @@ function changeCharacterEnemyFirst(currentFighter, thisPartyMember, enemy) {
 }
 
 function checkBattleStatus(player, enemy, wasPlayerTurn) {
+    let enemyDeadTime = 0;
+    let partyMembersDeadTime = 0;
+    let playerDeadTime = 0;
     let totalMessageTime = 0;
     let enemyDead = "";
+    let partyMembersDead = "";
     let playerDead = "";
 
     if (enemy.hp <= 0) {
@@ -966,8 +974,26 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
                 party.push(enemy);
             }
         }
-        afterFightWholeParty();
     }
+    enemyDeadTime = getTypeTextTime(enemyDead);
+
+    let dead = [];
+    for (let i = party.length - 1; i >= 0; i--) {
+        if (party[i].hp <= 0 && party[i] != player) {
+            dead.push(party[i]);
+            party.splice(i, 1);
+        }
+    }
+    if (enemyDead != "") partyMembersDead += "However ";
+    for (let i = 0; i < dead.length; i++) {
+        if (dead.length > 1 && i == dead.length - 1) partyMembersDead += "and ";
+        partyMembersDead += `${dead[i].name} `;
+        if (dead.length > 2 && i != dead.length - 1) partyMembersDead += ", ";
+    }
+    if (dead.length > 1) partyMembersDead += "have tragically died in the background.";
+    else if (dead.length > 0) partyMembersDead += "has tragically died in the background.";
+    partyMembersDeadTime = getTypeTextTime(partyMembersDead);
+
     if (player.hp <= 0) {
         if (wasPlayerTurn) {
             if (enemyDead == "") {
@@ -990,10 +1016,13 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
             }
         }
     }
+    playerDeadTime = getTypeTextTime(playerDead);
 
-    timeouts.push(setTimeout(typeText, typeText(enemyDead, true), playerDead, true));
-    totalMessageTime = getTypeTextTime(enemyDead) + getTypeTextTime(playerDead);
+    typeText(enemyDead, true);
+    timeouts.push(setTimeout(typeText, enemyDeadTime, partyMembersDead, true));
+    timeouts.push(setTimeout(typeText, enemyDeadTime + partyMembersDeadTime, playerDead, true));
 
+    totalMessageTime = enemyDeadTime + partyMembersDeadTime + playerDeadTime;
     if (party.length == 0) timeouts.push(setTimeout(gameOver, totalMessageTime));
     else if (enemyDead != "") timeouts.push(setTimeout(areaSelect, totalMessageTime));
     else if (playerDead != "") timeouts.push(setTimeout(playerTurn, totalMessageTime, null, enemy));
@@ -1012,13 +1041,37 @@ function gameOver() {
 }
 
 function damageAnimation(player, enemy, wasPlayerTurn) {
-    for (let i = 0; i < party.length; i++) {
-        party[i].displayhp = party[i].hp;
-    }
-    enemy.displayhp = enemy.hp;
     displayCurrentFighters(player, enemy);
     displayParty(player, enemy, false, null, null);
-    checkBattleStatus(player, enemy, wasPlayerTurn);
+    let animationUsed = false;
+    
+    for (let i = 0; i < party.length; i++) {
+        let partyMember = party[i];
+        if (partyMember != player && partyMember.hp != partyMember.displayhp)
+            animateBar(partyMember, $(`#party${i} .progressBar`), $(`#party${i} .progressBarLabel`));
+    }
+    if (player.hp != player.displayhp) animateBar(player, $("#currentFighterBar"), $("#currentFighterBarLabel"));
+    if (enemy.hp != enemy.displayhp) animateBar(enemy, $("#currentEnemyBar"), $("#currentEnemyBarLabel"));
+
+    function animateBar(character, bar, label) {
+        const TICK_RATE = 25;
+        let difference = character.hp - character.displayhp;
+        for (let tick = 0; tick < damageSpeed; tick += TICK_RATE) {
+            timeouts.push(setTimeout(function() {
+                if (tick + TICK_RATE >= damageSpeed) character.displayhp = character.hp;
+                else character.displayhp += TICK_RATE*difference/damageSpeed;
+                let maxhp = character.maxhp;
+                let displayhp = character.displayhp;
+                let healthBarColor = getHealthBarColor(displayhp, maxhp);
+                bar.css({"width":`${100*displayhp/maxhp}%`,"background-color":healthBarColor});
+                label.html(`${Math.floor(displayhp)}/${maxhp}`)
+            }, tick));
+        }
+        animationUsed = true;
+    }
+
+    if (animationUsed) timeouts.push(setTimeout(checkBattleStatus, damageSpeed, player, enemy, wasPlayerTurn));
+    else checkBattleStatus(player, enemy, wasPlayerTurn);
 }
 
 function playerTurn(player, enemy) {
@@ -1100,6 +1153,8 @@ function askForNameAndDescription() {
 }
 
 function areaSelect() {
+    clearAllTimeouts();
+    afterFightWholeParty();
     displayParty(null, null, false, null, null);
     hideCurrentFighters();
     let message = "What an exhilarating battle! You're not done yet, though. There are still opponents to be conquered. What will you do next?";
