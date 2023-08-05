@@ -59,19 +59,98 @@ button {
     outline: 1px solid black;
 }
 
-#gameSpeedContainer .optionButton {
-    cursor: pointer;
-    font-size: 2vmin;
-}
-
 #gameSpeedTop {
     grid-column: 1 / 4; grid-row: 1 / 2;
     font-size: 3vmin;
 }
 
+#gameSpeedContainer .optionButton {
+    cursor: pointer;
+    font-size: 2vmin;
+}
+
 #normal {grid-column: 1 / 2; grid-row: 2 / 3;}
 #fast {grid-column: 2 / 3; grid-row: 2 / 3;}
 #ultra {grid-column: 3 / 4; grid-row: 2 / 3;}
+
+#volumeContainer {
+    width: 75%;
+    height: 10%;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 50% auto;
+    margin: auto;
+}
+
+#volumeContainer * {
+    outline: 1px solid black;
+}
+
+#volumeTop {
+    width: 100%;
+    height: 100%;
+    display: block;
+    text-align: center;
+    background-color: lightgrey;
+    grid-column: 1 / 2; grid-row: 1 / 2;
+    font-size: 3vmin;
+}
+
+#volumeContainer input {
+    appearance: none;
+    margin-left: 0; margin-right: 0;
+    grid-column: 1 / 2; grid-row: 2 / 3;
+}
+
+#volumeContainer input::-webkit-slider-runnable-track {
+    appearance: none;
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+    background: lightgrey;
+}
+
+#volumeContainer input::-moz-range-track {
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+    background: lightgrey;
+}
+
+#volumeContainer input::-ms-track {
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+    background: lightgrey;
+}
+
+#volumeContainer input::-webkit-slider-thumb {
+    appearance: none;
+    height: 100%;
+    width: 10%;
+    border-radius: none;
+    background: grey;
+    cursor: pointer;
+    outline: 1px solid black;
+}
+
+#volumeContainer input::-moz-range-thumb {
+    height: 100%;
+    width: 10%;
+    border-radius: none;
+    background: grey;
+    cursor: pointer;
+    outline: 1px solid black;
+}
+
+#volumeContainer input::-ms-thumb {
+    height: 100%;
+    width: 10%;
+    border-radius: none;
+    background: grey;
+    cursor: pointer;
+    outline: 1px solid black;
+}
                                     /* Party List Components */
 #partyList {
     width: 25%;
@@ -86,12 +165,12 @@ button {
 
 #partyListIconContainer {
     width: 100%;
-    height: 24%;
+    height: 20%;
     display: flex;
 }
 
 #partyListIcon {
-    height: 50%;
+    height: 75%;
     display: block;
     margin: auto;
     aspect-ratio: 1 / 1;
@@ -119,6 +198,13 @@ button {
     aspect-ratio: 1 / 1;
 }
 
+.partyMemberContainer img,
+.partyMemberContainer .progressBarLabel,
+.partyMemberContainer .partyName {
+    outline: 1px solid black;
+    margin: 1px;
+}
+
 .partyMemberContainer .progressBar,
 .partyMemberContainer .progressBarLabel,
 .partyMemberContainer .progressBarBackground {
@@ -127,8 +213,8 @@ button {
     left: 0;
     grid-column: 2 / 3;
     grid-row: 1 / 2;
-    position: absolute;
     text-align: center;
+    position: absolute;
     font-size: 3vmin;
 }
 
