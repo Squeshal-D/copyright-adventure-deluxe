@@ -3,7 +3,14 @@ var textSpeed = 30;
 var damageSpeed = 1000;
 var smartEnemies = false;
 
-const textScroll = new Audio("sounds/textScroll.wav");
+const textScrollSound = new Audio("sounds/textScroll.wav");
+const selectSound = new Audio("sounds/select.mp3");
+const healSound = new Audio("sounds/heal.wav");
+const damageSound = new Audio("sounds/damage.mp3");
+const buttonHoverSound = new Audio("sounds/buttonHover.wav");
+const victorySound = new Audio("sounds/win.wav");
+const deathSound = new Audio("sounds/death.wav");
+const gameOverSound = new Audio("sounds/gameOver.wav");
 
 var playerName = "";
 var playerDesc = "";
@@ -344,6 +351,9 @@ function Lennie() {
 
     this.attack1 = function(user, target) {
         let damage = 40 - Math.floor(40*user.hp/user.maxhp);
+        if (damage > 25) {
+            damage = 25;
+        }
         target.changehp(-damage);
         return typeText(`${user.name} pulls on ${target.name}'s hair for ${damage} damage!`, true);
     }
@@ -456,6 +466,7 @@ function Washington() {
     this.attack1Info = function(user, target) {
         let damage = -20 + Math.floor(0.6*target.maxhp);
         if (damage > 40) damage = 40;
+        else if (damage < 10) damage = 10;
         return `(${damage} dmg)`
     }
 
@@ -861,7 +872,14 @@ function setOptionButtonFunctions() {
 }
 
 function setVolumes(vol) {
-    textScroll.volume = vol/100;
+    textScrollSound.volume = vol/200;
+    selectSound.volume = vol/100;
+    healSound.volume = vol/100;
+    damageSound.volume = vol/100;
+    buttonHoverSound.volume = vol/100;
+    victorySound.volume = vol/100;
+    deathSound.volume = vol/100;
+    gameOverSound.volume = vol/100;
 }
 
 function changeGameSpeed(speed) {
@@ -912,7 +930,7 @@ function addAllEnemiesToPool() {
     const shrek = new Shrek(); shrek.refresh(); fightPool.push(shrek);
     const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
-    party = fightPool.slice();
+    // party = fightPool.slice();
     const thanos = new Thanos(); thanos.refresh(); fightPool.push(thanos);
     const herobrine = new Herobrine(); herobrine.refresh(); fightPool.push(herobrine);
     const sans = new Sans(); sans.refresh(); fightPool.push(sans);
@@ -936,14 +954,14 @@ function typeText(message, newLine) {
     if (message.length > 0 && newLine) text.append("<br>>> ");
 
     for (let i = 0; i < message.length; i++) {
-        timeouts.push(setTimeout(function() {text.append(message[i]); textScroll.play();}, i*textSpeed + specialCharDelay*textSpeed));
+        timeouts.push(setTimeout(function() {text.append(message[i]); textScrollSound.play();}, i*textSpeed + specialCharDelay*textSpeed));
         if (message[i] == '.' || message[i] == '?'|| message[i] == '!') {
             if (i + 1 < message.length && (message[i + 1] == "\"" || message[i + 1] == "'")) {
                 i++;
                 let lastItem = timeouts.length - 1;
                 clearTimeout(timeouts[lastItem]);
-                timeouts[lastItem] = setTimeout(function() {text.append(message[i-1]); textScroll.play();}, (i-1)*textSpeed + specialCharDelay*textSpeed)
-                timeouts.push(setTimeout(function() {text.append(message[i]); textScroll.play();}, i*textSpeed + specialCharDelay*textSpeed));
+                timeouts[lastItem] = setTimeout(function() {text.append(message[i-1]); textScrollSound.play();}, (i-1)*textSpeed + specialCharDelay*textSpeed)
+                timeouts.push(setTimeout(function() {text.append(message[i]); textScrollSound.play();}, i*textSpeed + specialCharDelay*textSpeed));
             }
             specialCharDelay += 9;
         }
@@ -1109,19 +1127,27 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
         }
 
         for (let i = 0; i < buttons.length; i++) {
-            buttons[i].on("mouseenter", function() {buttons[i].css("border", "1px solid black")});
+            buttons[i].on("mouseenter", function() {
+                buttonHoverSound.currentTime = 0; 
+                buttonHoverSound.play(); 
+                buttons[i].css("border", "1px solid black");
+            });
             buttons[i].on("mouseleave", function() {buttons[i].css("border", "3px solid black")});
             buttons[i].css("cursor", "pointer");
         }
 
         if (setButtonFunctions) {
             buttons[0].off("click").on("click", function() {
+                selectSound.currentTime = 0;
+                selectSound.play();
                 clearAllTimeouts();
                 hideBattleButtons(); 
                 displayParty(fighter, enemy, false, null, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true));
             });
             buttons[1].off("click").on("click", function() {
+                selectSound.currentTime = 0;
+                selectSound.play();
                 clearAllTimeouts();
                 hideBattleButtons(); 
                 displayParty(fighter, enemy, false, null, null);
@@ -1174,8 +1200,16 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction, ic
             if (currentFighter != null && party[i] == currentFighter) continue;
 
             $(`#party${i} *`).css("cursor", "pointer");
-            $(`#party${i}`).on("click", function() {onClickFunction(currentFighter, party[i], enemy)});
-            $(`#party${i}`).on("mouseenter", function() {$(`#party${i}`).css("border", "1px solid black")});
+            $(`#party${i}`).on("click", function() {
+                selectSound.currentTime = 0;
+                selectSound.play();
+                onClickFunction(currentFighter, party[i], enemy);
+            });
+            $(`#party${i}`).on("mouseenter", function() {
+                buttonHoverSound.currentTime = 0; 
+                buttonHoverSound.play();
+                $(`#party${i}`).css("border", "1px solid black");
+            });
             if (previewOnHover) $(`#party${i}`).on("mouseenter", function() {
                 displayBattleButtons(party[i], enemy, false);
                 displayCurrentFighters(party[i], enemy, false);
@@ -1272,8 +1306,23 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
     playerDeadTime = getTypeTextTime(playerDead);
 
     typeText(enemyDead, true);
-    timeouts.push(setTimeout(typeText, enemyDeadTime, partyMembersDead, true));
-    timeouts.push(setTimeout(typeText, enemyDeadTime + partyMembersDeadTime, playerDead, true));
+    if (enemyDead != "") {
+        victorySound.play();
+    }
+    timeouts.push(setTimeout(function() {
+        typeText(partyMembersDead, true);
+        if (partyMembersDead != "") {
+            deathSound.currentTime = 0;
+            deathSound.play();
+        }
+    }, enemyDeadTime));
+    timeouts.push(setTimeout(function() {
+        typeText(playerDead, true);
+        if (playerDead != "") {
+            deathSound.currentTime = 0;
+            deathSound.play();
+        }
+    }, enemyDeadTime + partyMembersDeadTime));
 
     totalMessageTime = enemyDeadTime + partyMembersDeadTime + playerDeadTime;
     if (party.length == 0) timeouts.push(setTimeout(gameOver, totalMessageTime));
@@ -1293,6 +1342,7 @@ function afterFightWholeParty() {
 }
 
 function gameOver() {
+    gameOverSound.play();
     timeouts.push(setTimeout(typeText, typeText("You are out of party members.", true), "GAME OVER - Press the restart button to try again.", true));
 }
 
@@ -1312,6 +1362,8 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
     function animateBar(character, bar, label) {
         const TICK_RATE = 25;
         let difference = character.hp - character.displayhp;
+        if (difference > 0) healSound.play();
+        else if (difference < 0) damageSound.play();
         for (let tick = 0; tick < damageSpeed; tick += TICK_RATE) {
             timeouts.push(setTimeout(function() {
                 if (tick + TICK_RATE >= damageSpeed) character.displayhp = character.hp;
