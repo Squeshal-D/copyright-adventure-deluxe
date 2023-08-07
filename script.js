@@ -365,6 +365,7 @@ function Lennie() {
 
     this.attack2 = function(user, target) {
         let damage = Math.floor(1250/target.maxhp);
+        if (damage > 25) damage = 25;
         target.changehp(-damage);
         return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`, true);
     }
@@ -821,6 +822,25 @@ function Sans() {
         }
     }
 }
+
+function HitSat() {
+    Character.call(this);
+
+    this.id = 13;
+    this.name = "Hitler Satan";
+    this.description = "Worst Guy Ever Made";
+    this.quest = "The Final Battle.";
+    this.entrance = "";
+    this.maxhp = 300;
+
+    this.boss = true;
+
+    this.move1name = "Bone Whack / Gravity";
+    this.move1desc = "10 damage + 5 on use / damage enemy and random party member";
+    this.move2name = "Lockup / Censored";
+    this.move2desc = "Party swap disabled / Some random stuff";
+}
+
                                         // Utility Functions
 function clearAllTimeouts() {
     // console.log(`There were ${timeouts.length} timeouts.`);
@@ -931,9 +951,10 @@ function addAllEnemiesToPool() {
     const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
     // party = fightPool.slice();
-    const thanos = new Thanos(); thanos.refresh(); fightPool.push(thanos);
-    const herobrine = new Herobrine(); herobrine.refresh(); fightPool.push(herobrine);
-    const sans = new Sans(); sans.refresh(); fightPool.push(sans);
+    minibossPool = [];
+    const thanos = new Thanos(); thanos.refresh(); minibossPool.push(thanos);
+    const herobrine = new Herobrine(); herobrine.refresh(); minibossPool.push(herobrine);
+    const sans = new Sans(); sans.refresh(); minibossPool.push(sans);
 }
 
 function removeEnemyFromPool(enemy) {
@@ -1333,11 +1354,15 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
 }
 
 function afterFightWholeParty() {
-    attack1Disabled = false;
-    attack2Disabled = false;
     partySwapDisabled = false;
     for (let i = 0; i < party.length; i++) {
         party[i].afterFight();
+    }
+}
+
+function healParty() {
+    for (let i = 0; i < party.length; i++) {
+        party[i].hp = party[i].maxhp;
     }
 }
 
@@ -1347,17 +1372,19 @@ function gameOver() {
 }
 
 function damageAnimation(player, enemy, wasPlayerTurn) {
-    displayCurrentFighters(player, enemy);
-    displayParty(player, enemy, false, null, null);
+    if (player != null && enemy != null) {
+        displayCurrentFighters(player, enemy);
+        displayParty(player, enemy, false, null, null);
+    }
     let animationUsed = false;
     
     for (let i = 0; i < party.length; i++) {
         let partyMember = party[i];
-        if (partyMember != player && partyMember.hp != partyMember.displayhp)
+        if ((player == null || partyMember != player) && partyMember.hp != partyMember.displayhp)
             animateBar(partyMember, $(`#party${i} .progressBar`), $(`#party${i} .progressBarLabel`));
     }
-    if (player.hp != player.displayhp) animateBar(player, $("#currentFighterBar"), $("#currentFighterBarLabel"));
-    if (enemy.hp != enemy.displayhp) animateBar(enemy, $("#currentEnemyBar"), $("#currentEnemyBarLabel"));
+    if (player != null && player.hp != player.displayhp) animateBar(player, $("#currentFighterBar"), $("#currentFighterBarLabel"));
+    if (enemy != null && enemy.hp != enemy.displayhp) animateBar(enemy, $("#currentEnemyBar"), $("#currentEnemyBarLabel"));
 
     function animateBar(character, bar, label) {
         const TICK_RATE = 25;
@@ -1378,8 +1405,10 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
         animationUsed = true;
     }
 
-    if (animationUsed) timeouts.push(setTimeout(checkBattleStatus, damageSpeed, player, enemy, wasPlayerTurn));
-    else checkBattleStatus(player, enemy, wasPlayerTurn);
+    if (animationUsed && (player != null || enemy != null)) timeouts.push(setTimeout(checkBattleStatus, damageSpeed, player, enemy, wasPlayerTurn));
+    else if (player != null || enemy != null) checkBattleStatus(player, enemy, wasPlayerTurn);
+    else if (animationUsed) return damageSpeed;
+    return 0;
 }
 
 function playerTurn(player, enemy) {
@@ -1476,13 +1505,23 @@ function areaSelect() {
         timeouts.push(setTimeout(displayAreaSelection, typeText(message, true), fightPool, 0));
     }
     else if (minibossPool.length > 0) {
-        let message = `${3 - minibossPool.length} down, ${minibossPool.length} to go.`;
+        
         if (minibossPool.length == 3) {
-            message = "All beings worthy of a fight on earth have been defeated and recruited to support your cause. You are not satisfied, though."
-                + "You know what you must do. You must fight... him... You and your warriors rest to prepare for the final battle. Everyone is fully healed. "
-                + "You've ascended to the grand entrance of his dwelling place. Three powerful guards protect the entrance.";
+            let message1 = "All beings worthy of a fight on earth have been defeated and recruited to support your cause. You are not satisfied, though."
+                + " You know what you must do. You must fight... him... You and your warriors rest to prepare for the final battle. Everyone is fully healed.";
+            healParty();
+            let message2 = "You've ascended to the grand entrance of his dwelling place. Three powerful guards protect the entrance.";
+            timeouts.push(setTimeout(function() {
+                timeouts.push(setTimeout(function() {
+                    timeouts.push(setTimeout(displayAreaSelection, typeText(message2, true), minibossPool, 0));
+                }, damageAnimation(null, null, null)));
+            }, typeText(message1, true)));
         }
-        timeouts.push(setTimeout(displayAreaSelection, typeText(message, true), minibossPool, 0));
+        else {
+            let message = `${3 - minibossPool.length} down, ${minibossPool.length} to go.`;
+            timeouts.push(setTimeout(displayAreaSelection, typeText(message, true), minibossPool, 0));
+        }
+        
     }
 }
                                         // Main Functions
