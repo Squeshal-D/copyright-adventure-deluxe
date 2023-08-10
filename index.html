@@ -3,7 +3,7 @@
     <head>
         <title>Copyright Adventure Deluxe</title>
         <link rel="stylesheet" href="style.css">
-        <link rel="icon" href="cad icon.png">
+        <link rel="icon" href="icons/cad icon.png">
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
         <script src="script.js"></script>
@@ -11,6 +11,16 @@
     <body>
         <div id = "optionsBox">
             <button type="button" id="restart">Restart</button>
+            <div id="gameSpeedContainer">
+                <div id="gameSpeedTop">Game Speed</div>
+                <div class="optionButton" id="normal">Normal</div>
+                <div class="optionButton" id="fast">Fast</div>
+                <div class="optionButton" id="ultra">Ultra</div>
+            </div>
+            <div id="volumeContainer">
+                <div id="volumeTop">- Volume +</div>
+                <input type="range" min="0" max="100" value="0" id="volume">
+            </div>
         </div>
 
         <div id="textBox">
@@ -20,8 +30,30 @@
         </div>
 
         <div id="pictureBox">
-            <div id="pictures">
-                    
+            <div id="battleDisplay">
+                <div id="battleDisplayTopColor"></div>
+
+                <img class="turnIndicator" id="currentFighterTurnIcon" src="icons/small arrow.png"></img>
+                <label class="battleName" id="currentFighterName">...</label>
+                <label class="battleDesc" id="currentFighterDesc">...</label>
+                <img class="battlePicture" id="currentFighterPicture" src="characterPictures/empty character.png"></img>
+                <div class="progressBarBackground" id="currentFighterBarBackground" style="background-color:whitesmoke;"></div>
+                <div class="progressBar" id="currentFighterBar" style="background-color:lightgreen;"></div>
+                <label class="progressBarLabel" id="currentFighterBarLabel">0/0</label>
+
+                <img class="turnIndicator" id="currentEnemyTurnIcon" src="icons/small arrow.png"></img>
+                <label class="battleName" id="currentEnemyName">...</label>
+                <label class="battleDesc" id="currentEnemyDesc">...</label>
+                <img class="battlePicture" id="currentEnemyPicture" src="characterPictures/empty character.png"></img>
+                <div class="progressBarBackground" id="currentEnemyBarBackground" style="background-color:whitesmoke;"></div>
+                <div class="progressBar" id="currentEnemyBar" style="background-color:lightgreen;"></div>
+                <label class="progressBarLabel" id="currentEnemyBarLabel">0/0</label>
+            </div>
+            
+            <div id="areaSelectDisplay">
+                <img class="areaPicture" id="area1" src="characterPictures/empty character.png"></img>
+                <img class="areaPicture" id="area2" src="characterPictures/empty character.png"></img>
+                <img class="areaPicture" id="area3" src="characterPictures/empty character.png"></img>
             </div>
         </div>
 
@@ -36,20 +68,21 @@
                 <button type="button" class="areaSelect" id="areaButton1"></button>
                 <button type="button" class="areaSelect" id="areaButton2"></button>
                 <button type="button" class="areaSelect" id="areaButton3"></button>
+
+                <button type="button" class="areaSwap" id="areaLeft">&lt;Prev</button>
+                <button type="button" class="areaSwap" id="areaRight">Next&gt;</button>
             </div>
 
             <div id="battleButtonContainer">
                 <button type="button" class="attack" id="attack1button">attack1</button>
-                <label class="attack" id="attack1label">Description for <br> move 1</label>
+                <label class="attack" id="attack1label"></label>
                 <button type="button" class="attack" id="attack2button">attack2</button>
                 <label class="attack" id="attack2label"></label>
-                <button type="button" class="attack" id="switch">Switch</button>
-                <label class="attack" id="switchLabel"></label>
             </div>
         </div>
 
         <div id="partyList">
-            
+
         </div>
     </body>
 </html>
