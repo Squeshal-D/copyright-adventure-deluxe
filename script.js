@@ -12,6 +12,21 @@ const victorySound = new Audio("sounds/win.wav");
 const deathSound = new Audio("sounds/death.wav");
 const gameOverSound = new Audio("sounds/gameOver.wav");
 
+const PLAYER_ID = 0;
+const BLART_ID = 1;
+const WICK_ID = 2;
+const DERREK_ID = 3;
+const BOWERS_ID = 4;
+const CHIEF_ID = 5;
+const LENNIE_ID = 6;
+const SHREK_ID = 7;
+const WASHINGTON_ID = 8;
+const RAMSAY_ID = 9;
+const THANOS_ID = 10;
+const HEROBRINE_ID = 11;
+const SANS_ID = 12;
+const HITSAT_ID = 13;
+
 var playerName = "";
 var playerDesc = "";
 var timeouts = [];
@@ -19,8 +34,10 @@ var timeouts = [];
 var party = [];
 var fightPool = [];
 var minibossPool = [];
+var finalBoss;
 
 var partySwapDisabled = false;
+var bowersStatus = 0; // 0 = alive, 1 = in party, 2 = dead
                                         // Characters
 function Character() {
     this.id = 0;
@@ -28,7 +45,7 @@ function Character() {
     this.description = playerDesc;
     this.quest = "";
     this.entrance = "";
-    this.picture = "icons/cad icon.png";
+    this.picture = "characterPictures/empty character.png";
     this.maxhp = 50;
     this.hp = 50;
     this.displayhp = 50;
@@ -95,7 +112,7 @@ function Blart() {
     this.move1name = "Segway Slam";
     this.move1desc = "An all-out rollout. <br>Has a 50% chance to hit (40 dmg), as well as a 50% chance to recoil (20 self dmg).";
     this.move2name = "Headbutt";
-    this.move2desc = "\"Nobody wins with a headbutt.\" <br>(25 dmg) (15 self dmg).";
+    this.move2desc = "\"Nobody wins with a headbutt.\" <br>(25 dmg) (10 self dmg).";
 
     this.attack1 = function(user, target) {
         let message = "";
@@ -120,7 +137,7 @@ function Blart() {
     this.attack2 = function(user, target) {
         target.changehp(-25);
         user.changehp(-15);
-        return typeText(`${user.name} headbutts ${target.name} for 25 dmg, but recieves 15 dmg in recoil!`, true);
+        return typeText(`${user.name} headbutts ${target.name} for 25 dmg, but recieves 10 dmg in recoil!`, true);
     }
 }
 
@@ -351,9 +368,6 @@ function Lennie() {
 
     this.attack1 = function(user, target) {
         let damage = 40 - Math.floor(40*user.hp/user.maxhp);
-        if (damage > 25) {
-            damage = 25;
-        }
         target.changehp(-damage);
         return typeText(`${user.name} pulls on ${target.name}'s hair for ${damage} damage!`, true);
     }
@@ -372,6 +386,7 @@ function Lennie() {
 
     this.attack2Info = function(user, target) {
         let damage = Math.floor(1250/target.maxhp);
+        if (damage > 25) damage = 25;
         return `(${damage} dmg)`
     }
 }
@@ -831,14 +846,65 @@ function HitSat() {
     this.description = "Worst Guy Ever Made";
     this.quest = "The Final Battle.";
     this.entrance = "";
-    this.maxhp = 300;
+    this.maxhp = 500;
 
     this.boss = true;
 
-    this.move1name = "Bone Whack / Gravity";
-    this.move1desc = "10 damage + 5 on use / damage enemy and random party member";
-    this.move2name = "Lockup / Censored";
-    this.move2desc = "Party swap disabled / Some random stuff";
+    this.move1name = "Devil's Lettuce / Laser Eyes / Nazi Punch";
+    this.move1desc = "1/2 to do 30 dmg / 5 1/2 hit lasers, 8 dmg each / 15 - 30 damage";
+    this.move2name = "Nazi Laser / Demon Headbutt / Words of Discouragement";
+    this.move2desc = "charge 1 turn, 40 damage / 30 damage, 10 recoil / 10 damage, 10 heal";
+
+    this.fried = false;
+
+    this.attack1 = function(user, target) {
+        let move = Math.floor(3 * Math.random());
+        if (move == 0) {
+            let message = `${user.name} rips the devil's lettuce!`;
+            if (bowersStatus == 1) message += ` John Bowers disapproves and slaps ${user.name} for 1 damage.`;
+            else if (Math.floor(Math.random() * 2) == 0) {
+                message += ` John Bowers returns from the depths of Hell to spank ${target.name} for 30 damage.`;
+                target.changehp(-30);
+            }
+            else {
+                message += ` ${user.name}'s brain turned into an egg being fried in a skillet.`;
+                user.fried = true;
+            }
+            return typeText(message, true);
+        }
+        else if (move == 1) {
+            
+        }
+        else {
+            
+        }
+    }
+
+    this.attack2 = function(user, target) {
+        user.hitOnThisTurn = false;
+        let dodgeMessage = getDodgeMessage(user);
+        let dodgeMessageTime = getTypeTextTime(dodgeMessage);
+        let move = Math.floor(2 * Math.random());
+        if (move == 1 && !partySwapDisabled) {
+            partySwapDisabled = true;
+            let message = `${user.name} locks ${target.name} into the ring!`;
+            let messageTime = getTypeTextTime(message);
+            timeouts.push(setTimeout(typeText, typeText(dodgeMessage, true), message, true));
+            return dodgeMessageTime + messageTime;
+        }
+        else {
+            let message = `${user.name} has censored this attack.`;
+            let messageTime = getTypeTextTime(message);
+            for (let i = 0; i < party.length; i++) {
+                if (party[i] != target && Math.floor(Math.random()*2) == 0) {
+                    party[i].changehp(5 - Math.floor(Math.random()*21));
+                }
+            }
+            target.changehp(10 - Math.random()*31);
+            timeouts.push(setTimeout(typeText, typeText(dodgeMessage, true), message, true));
+            return dodgeMessageTime + messageTime;
+        }
+    }
 }
 
                                         // Utility Functions
@@ -854,6 +920,7 @@ function setStartConditions() {
     clearAllTimeouts();
     party = [];
     partySwapDisabled = false;
+    bowersStatus = 0;
     displayParty(null, null, false, null, null);
     addAllEnemiesToPool();
     clearTextBox();
@@ -958,7 +1025,8 @@ function addAllEnemiesToPool() {
 }
 
 function removeEnemyFromPool(enemy) {
-    fightPool.splice(fightPool.indexOf(enemy), 1);
+    if (fightPool.includes(enemy)) fightPool.splice(fightPool.indexOf(enemy), 1);
+    else if (minibossPool.includes(enemy)) minibossPool.splice(minibossPool.indexOf(enemy), 1);
 }
 
 function getHealthBarColor(hp, maxhp) {
@@ -966,6 +1034,11 @@ function getHealthBarColor(hp, maxhp) {
     if (float > 0.6666) return "lightgreen";
     else if (float > 0.3333) return "orange";
     else return "red";
+}
+
+function stopPlaySound(sound) {
+    sound.currentTime = 0;
+    sound.play();
 }
                                         // UI Functions
 // This function can be used as a `delay` parameter for setTimeout, to set an action after the message has been typed.
@@ -1050,8 +1123,14 @@ function displayAreaSelection(allFights, offset) {
         areaSelectButtons[i].css("display", "none");
         areaPictures[i].css("display", "none");
     }
-    areaSwapButtons[0].off("click").on("click", function() {displayAreaSelection(allFights, offset - 3)});
-    areaSwapButtons[1].off("click").on("click", function() {displayAreaSelection(allFights, offset + 3)});
+    areaSwapButtons[0].off("click").on("click", function() {
+        stopPlaySound(selectSound);
+        displayAreaSelection(allFights, offset - 3);
+    });
+    areaSwapButtons[1].off("click").on("click", function() {
+        stopPlaySound(selectSound);
+        displayAreaSelection(allFights, offset + 3);
+    });
     
     for (let i = currentOffset; i < currentOffset + 3 && i < allFights.length; i++) {
         areaSelectButtons[i%3].html(allFights[i].quest);
@@ -1096,7 +1175,7 @@ function displayCurrentFighters(player, enemy) {
     $("#currentEnemyBarLabel").html(`${Math.floor(displayhp)}/${maxhp}`);
     $("#currentEnemyBar").css({"width":`${100*displayhp/maxhp}%`,"background-color":healthBarColor});
 
-    $("#battleDisplay").css("display", "grid");
+    $("#battleDisplay").css("display", "block");
 }
 
 function hideCurrentFighters() {
@@ -1149,8 +1228,7 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
 
         for (let i = 0; i < buttons.length; i++) {
             buttons[i].on("mouseenter", function() {
-                buttonHoverSound.currentTime = 0; 
-                buttonHoverSound.play(); 
+                stopPlaySound(buttonHoverSound);
                 buttons[i].css("border", "1px solid black");
             });
             buttons[i].on("mouseleave", function() {buttons[i].css("border", "3px solid black")});
@@ -1159,16 +1237,14 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
 
         if (setButtonFunctions) {
             buttons[0].off("click").on("click", function() {
-                selectSound.currentTime = 0;
-                selectSound.play();
+                stopPlaySound(selectSound);
                 clearAllTimeouts();
                 hideBattleButtons(); 
                 displayParty(fighter, enemy, false, null, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true));
             });
             buttons[1].off("click").on("click", function() {
-                selectSound.currentTime = 0;
-                selectSound.play();
+                stopPlaySound(selectSound);
                 clearAllTimeouts();
                 hideBattleButtons(); 
                 displayParty(fighter, enemy, false, null, null);
@@ -1195,7 +1271,9 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction, ic
         let healthBarColor = getHealthBarColor(party[i].displayhp, party[i].maxhp);
         partyDivContents += 
         `<div class="partyMemberContainer" id="party${i}">
-            <img src="${party[i].picture}"></img>
+            <div class="firefoxNonsense">
+                <img src="${party[i].picture}"></img>
+            </div>
             <div class="progressBarBackground" style="background-color:whitesmoke;"></div>
             <div class="progressBar" style="background-color:${healthBarColor}; width:calc(100% * ${party[i].displayhp}/${party[i].maxhp});"></div>
             <label class="progressBarLabel">${Math.floor(party[i].displayhp)}/${party[i].maxhp}</label>
@@ -1222,13 +1300,11 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction, ic
 
             $(`#party${i} *`).css("cursor", "pointer");
             $(`#party${i}`).on("click", function() {
-                selectSound.currentTime = 0;
-                selectSound.play();
+                stopPlaySound(selectSound);
                 onClickFunction(currentFighter, party[i], enemy);
             });
             $(`#party${i}`).on("mouseenter", function() {
-                buttonHoverSound.currentTime = 0; 
-                buttonHoverSound.play();
+                stopPlaySound(buttonHoverSound);
                 $(`#party${i}`).css("border", "1px solid black");
             });
             if (previewOnHover) $(`#party${i}`).on("mouseenter", function() {
@@ -1266,6 +1342,7 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
     let playerDead = "";
 
     if (enemy.hp <= 0) {
+        if (enemy.id == BOWERS_ID) bowersStatus = 1;
         if (wasPlayerTurn) {
             if (enemy.boss) enemyDead = `${enemy.name} was defeated! You won!`;
             else {
@@ -1288,6 +1365,7 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
     let dead = [];
     for (let i = party.length - 1; i >= 0; i--) {
         if (party[i].hp <= 0 && party[i] != player) {
+            if (party[i].id == BOWERS_ID) bowersStatus = 2;
             dead.push(party[i]);
             party.splice(i, 1);
         }
@@ -1303,6 +1381,7 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
     partyMembersDeadTime = getTypeTextTime(partyMembersDead);
 
     if (player.hp <= 0) {
+        if (player.id == BOWERS_ID) bowersStatus = 2;
         if (wasPlayerTurn) {
             if (enemyDead == "") {
                 playerDead = `Bruh! ${player.name} died from that!`;
@@ -1333,15 +1412,13 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
     timeouts.push(setTimeout(function() {
         typeText(partyMembersDead, true);
         if (partyMembersDead != "") {
-            deathSound.currentTime = 0;
-            deathSound.play();
+            stopPlaySound(deathSound);
         }
     }, enemyDeadTime));
     timeouts.push(setTimeout(function() {
         typeText(playerDead, true);
         if (playerDead != "") {
-            deathSound.currentTime = 0;
-            deathSound.play();
+            stopPlaySound(deathSound);
         }
     }, enemyDeadTime + partyMembersDeadTime));
 
