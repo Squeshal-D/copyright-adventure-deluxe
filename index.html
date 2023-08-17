@@ -31,23 +31,35 @@
 
         <div id="pictureBox">
             <div id="battleDisplay">
-                <div id="battleDisplayTopColor"></div>
-
-                <img class="turnIndicator" id="currentFighterTurnIcon" src="icons/small arrow.png"></img>
-                <label class="battleName" id="currentFighterName">...</label>
-                <label class="battleDesc" id="currentFighterDesc">...</label>
-                <img class="battlePicture" id="currentFighterPicture" src="characterPictures/empty character.png"></img>
-                <div class="progressBarBackground" id="currentFighterBarBackground" style="background-color:whitesmoke;"></div>
-                <div class="progressBar" id="currentFighterBar" style="background-color:lightgreen;"></div>
-                <label class="progressBarLabel" id="currentFighterBarLabel">0/0</label>
-
-                <img class="turnIndicator" id="currentEnemyTurnIcon" src="icons/small arrow.png"></img>
-                <label class="battleName" id="currentEnemyName">...</label>
-                <label class="battleDesc" id="currentEnemyDesc">...</label>
-                <img class="battlePicture" id="currentEnemyPicture" src="characterPictures/empty character.png"></img>
-                <div class="progressBarBackground" id="currentEnemyBarBackground" style="background-color:whitesmoke;"></div>
-                <div class="progressBar" id="currentEnemyBar" style="background-color:lightgreen;"></div>
-                <label class="progressBarLabel" id="currentEnemyBarLabel">0/0</label>
+                <div id="battleDisplayTop">
+                    <div id="battleDisplayTopColor"></div>
+                    <label class="battleName" id="currentFighterName">...</label>
+                    <label class="battleDesc" id="currentFighterDesc">...</label>
+                    <label class="battleName" id="currentEnemyName">...</label>
+                    <label class="battleDesc" id="currentEnemyDesc">...</label>
+                </div>
+                <div id="battleDisplayMiddle">
+                    <div class="firefoxAtItAgain" id="currentFighterPictureContainer">
+                        <img class="battlePicture" id="currentFighterPicture" src="characterPictures/empty character.png"></img>
+                    </div>
+                    <div class="progressBarBackground" id="currentFighterBarBackground" style="background-color:whitesmoke;"></div>
+                    <div class="progressBar" id="currentFighterBar" style="background-color:lightgreen;"></div>
+                    <label class="progressBarLabel" id="currentFighterBarLabel">0/0</label>
+                    <div class="firefoxAtItAgain" id="currentEnemyPictureContainer">
+                        <img class="battlePicture" id="currentEnemyPicture" src="characterPictures/empty character.png"></img>
+                    </div>
+                    <div class="progressBarBackground" id="currentEnemyBarBackground" style="background-color:whitesmoke;"></div>
+                    <div class="progressBar" id="currentEnemyBar" style="background-color:lightgreen;"></div>
+                    <label class="progressBarLabel" id="currentEnemyBarLabel">0/0</label>
+                </div>
+                <div id="battleDisplayBottom">
+                    <div class="turnIconContainer" id="currentFighterTurnIconContainer">
+                        <img class="turnIcon" id="currentFighterTurnIcon" src="icons/small arrow.png"></img>
+                    </div>
+                    <div class="turnIconContainer" id="currentEnemyTurnIconContainer">
+                        <img class="turnIcon" id="currentEnemyTurnIcon" src="icons/small arrow.png"></img>
+                    </div>
+                </div>
             </div>
             
             <div id="areaSelectDisplay">
