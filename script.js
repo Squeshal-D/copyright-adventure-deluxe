@@ -38,12 +38,14 @@ var finalBoss;
 
 var partySwapDisabled = false;
 var bowersStatus = 0; // 0 = alive, 1 = in party, 2 = dead
+var turns = 0;
                                         // Characters
 function Character() {
     this.id = 0;
     this.name = playerName;
     this.description = playerDesc;
     this.quest = "";
+    this.questPicture = "icons/cad icon.png";
     this.entrance = "";
     this.picture = "characterPictures/empty character.png";
     this.maxhp = 50;
@@ -56,7 +58,7 @@ function Character() {
     this.move1name = "Punch";
     this.move1desc = "How normal. <br>(15-25 dmg)";
     this.move2name = "Juul";
-    this.move2desc = "A sophomore classic. <br>50% chance to trigger a Bowers attack (30 dmg).";
+    this.move2desc = "A sophomore classic. <br>May trigger a Bowers attack (30 dmg).";
 
     this.changehp = function(damage) {
         this.hp += damage;
@@ -85,12 +87,26 @@ function Character() {
     }
 
     this.attack2 = function(user, target) {
-        let randInt = Math.floor(Math.random() * 2);
-        if (randInt == 1) {
-            target.changehp(-30);
-            return typeText(`Bowers senses the vape and springs out of nowhere! He annihilates ${target.name} for 30 dmg!`, true);
+        if (target.id == BOWERS_ID) {
+            user.changehp(-999);
+            return typeText(`What have you done!? ${target.name} sends ${user.name} to the shadow realm for 999 damage! Remember, kids, Mr. Bowers ` + 
+            `says that vaping is bad for you and can cause lung damage or something.`, true);
         }
-        else return typeText(`${user.name} vapes undisturbed. ${target.name} is jealous.`, true);
+        else if (bowersStatus == 0) {
+            let randInt = Math.floor(Math.random() * 2);
+            if (randInt == 1) {
+                target.changehp(-30);
+                return typeText(`Bowers senses the vape and springs out of nowhere! He annihilates ${target.name} for 30 dmg!`, true);
+            }
+            else return typeText(`${user.name} vapes undisturbed. ${target.name} is jealous.`, true);
+        }
+        else if (bowersStatus == 1) {
+            target.changehp(-30);
+            return typeText(`${user.name} vapes, and Bowers is enraged by the sight of the pen! He disciplines ${target.name} for 30 damage.`, true);
+        }
+        else {
+            return typeText(`${user.name} vapes in memory of Mr. Bowers.`, true);
+        }
     }
 
     this.attack2Info = function(user, target) {
@@ -136,7 +152,7 @@ function Blart() {
 
     this.attack2 = function(user, target) {
         target.changehp(-25);
-        user.changehp(-15);
+        user.changehp(-10);
         return typeText(`${user.name} headbutts ${target.name} for 25 dmg, but recieves 10 dmg in recoil!`, true);
     }
 }
@@ -306,6 +322,7 @@ function Chief() {
     this.name = "Master Chief";
     this.description = "AKA Halo";
     this.quest = "Hijack a space vessel.";
+    this.questPicture = "places/space.png";
     this.entrance = "Hijacking a space vessel would surely cause the government to send special forces to stop you, and they do!"
     + " As soon as the armored warrior approaches you, he informs you that what you are doing is 'illegal' and that he needs a weapon.";
     this.maxhp = 100;
@@ -357,6 +374,7 @@ function Lennie() {
     this.name = "Lennie Small";
     this.description = "Pro Rabbit Tender";
     this.quest = "Go into that big ol barn over there.";
+    this.questPicture = "places/farm.png";
     this.entrance = "The huge barn door slowly opens and you peek inside. By the light through the door you can see the figure of a large man"
     + " petting a small mouse. \"You're lookin' pretty soft.\" He drops the lifeless rodent and lumbers toward you.";
     this.maxhp = 80;
@@ -398,6 +416,7 @@ function Shrek() {
     this.name = "Shrek";
     this.description = "Dreamwork's All-Star";
     this.quest = "Go hunt in the swamp.";
+    this.questPicture = "places/swamp.png";
     this.entrance = "Swamps are dangerous places. What makes this swamp even more dangerous, though, is that it is HIS swamp."
     + " \"Oh hello there! Shrek here, and I'm ticked off!\"";
     this.maxhp = 80;
@@ -853,7 +872,7 @@ function HitSat() {
     this.move1name = "Devil's Lettuce / Laser Eyes / Nazi Punch";
     this.move1desc = "1/2 to do 30 dmg / 5 1/2 hit lasers, 8 dmg each / 15 - 30 damage";
     this.move2name = "Nazi Laser / Demon Headbutt / Words of Discouragement";
-    this.move2desc = "charge 1 turn, 40 damage / 30 damage, 10 recoil / 10 damage, 10 heal";
+    this.move2desc = "charge 1 turn, 50 damage / 30 damage, 15 recoil / 10 damage, 10 heal";
 
     this.fried = false;
 
@@ -861,7 +880,10 @@ function HitSat() {
         let move = Math.floor(3 * Math.random());
         if (move == 0) {
             let message = `${user.name} rips the devil's lettuce!`;
-            if (bowersStatus == 1) message += ` John Bowers disapproves and slaps ${user.name} for 1 damage.`;
+            if (bowersStatus == 1) {
+                user.changehp(-1);
+                message += ` John Bowers disapproves and slaps ${user.name} for 1 damage.`;
+            }
             else if (Math.floor(Math.random() * 2) == 0) {
                 message += ` John Bowers returns from the depths of Hell to spank ${target.name} for 30 damage.`;
                 target.changehp(-30);
@@ -873,36 +895,53 @@ function HitSat() {
             return typeText(message, true);
         }
         else if (move == 1) {
+            let hits = 0;
+            let shots = 0;
+            let message1 = `${user.name} fires their laser eyes! They hit ${hits}/${shots}`;
+            let message1Time = typeText(message1, true);
+            let message2 = " lasers!";
+            let message2Time = getTypeTextTime(message2);
+            const missChance = 0.5;
             
+            for (let i = 0; i < 5; i++) {
+                shots++;
+                if (Math.random() > missChance) {
+                    hits++;
+                    timeouts.push(setTimeout(replaceText, message1Time + shots*5*textSpeed, `${hits - 1}/${shots - 1}`, `${hits}/${shots}`));
+                }
+                else timeouts.push(setTimeout(replaceText, message1Time + shots*5*textSpeed, `${hits}/${shots - 1}`, `${hits}/${shots}`));
+            }
+            timeouts.push(setTimeout(typeText, message1Time + (shots + 1)*5*textSpeed, message2, false));
+            target.changehp(-8*hits);
+            return message1Time + (shots + 1)*5*textSpeed + message2Time;
         }
         else {
-            
+            let randInt = 15 + Math.floor(Math.random()* 16);
+            target.changehp(-randInt);
+            return typeText(`${user.name} nazi punches ${target.name} for ${randInt} damage!`, true);
         }
     }
 
     this.attack2 = function(user, target) {
-        user.hitOnThisTurn = false;
-        let dodgeMessage = getDodgeMessage(user);
-        let dodgeMessageTime = getTypeTextTime(dodgeMessage);
-        let move = Math.floor(2 * Math.random());
-        if (move == 1 && !partySwapDisabled) {
-            partySwapDisabled = true;
-            let message = `${user.name} locks ${target.name} into the ring!`;
-            let messageTime = getTypeTextTime(message);
-            timeouts.push(setTimeout(typeText, typeText(dodgeMessage, true), message, true));
-            return dodgeMessageTime + messageTime;
+        let move = Math.floor(3 * Math.random());
+        if (this.charging != 0) {
+            target.changehp(-50);
+            this.charging = 0;
+            return typeText(`${user.name} fires the nazi laser of doom at ${target.name} for 50 damage!`, true);
+        }
+        else if (move == 0) {
+            this.charging = 2;
+            return typeText(`${user.name} charges the nazi laser of doom!`, true);
+        }
+        else if (move == 1) {
+            target.changehp(-30);
+            user.changehp(-15);
+            return typeText(`${user.name} demon headbutts ${target.name} for 30 damage, and recieves 15 damage in recoil!`, true);
         }
         else {
-            let message = `${user.name} has censored this attack.`;
-            let messageTime = getTypeTextTime(message);
-            for (let i = 0; i < party.length; i++) {
-                if (party[i] != target && Math.floor(Math.random()*2) == 0) {
-                    party[i].changehp(5 - Math.floor(Math.random()*21));
-                }
-            }
-            target.changehp(10 - Math.random()*31);
-            timeouts.push(setTimeout(typeText, typeText(dodgeMessage, true), message, true));
-            return dodgeMessageTime + messageTime;
+            target.changehp(-10);
+            user.changehp(10);
+            return typeText(`${user.name} spread words of discouragement. They feed off of ${target.name}'s sadness in the form of 10 hp.`, true)
         }
     }
 }
@@ -921,6 +960,7 @@ function setStartConditions() {
     party = [];
     partySwapDisabled = false;
     bowersStatus = 0;
+    turns = 0;
     displayParty(null, null, false, null, null);
     addAllEnemiesToPool();
     clearTextBox();
@@ -1017,11 +1057,14 @@ function addAllEnemiesToPool() {
     const shrek = new Shrek(); shrek.refresh(); fightPool.push(shrek);
     const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
-    // party = fightPool.slice();
+    party = fightPool.slice(); bowersStatus = 1;
     minibossPool = [];
     const thanos = new Thanos(); thanos.refresh(); minibossPool.push(thanos);
     const herobrine = new Herobrine(); herobrine.refresh(); minibossPool.push(herobrine);
     const sans = new Sans(); sans.refresh(); minibossPool.push(sans);
+    fightPool = [];
+    minibossPool = [];
+    const hitsat = new HitSat(); hitsat.refresh(); finalBoss = hitsat;
 }
 
 function removeEnemyFromPool(enemy) {
@@ -1139,7 +1182,7 @@ function displayAreaSelection(allFights, offset) {
             enemyEntrance(allFights[i]);
             removeEnemyFromPool(allFights[i]);
         });
-        // Setting image for area goes here
+        areaPictures[i%3].attr("src", `${allFights[i].questPicture}`);
         areaSelectButtons[i%3].css("display", "block");
         areaPictures[i%3].css("display", "block");
     }
@@ -1239,14 +1282,14 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
             buttons[0].off("click").on("click", function() {
                 stopPlaySound(selectSound);
                 clearAllTimeouts();
-                hideBattleButtons(); 
+                hideBattleButtons();
                 displayParty(fighter, enemy, false, null, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true));
             });
             buttons[1].off("click").on("click", function() {
                 stopPlaySound(selectSound);
                 clearAllTimeouts();
-                hideBattleButtons(); 
+                hideBattleButtons();
                 displayParty(fighter, enemy, false, null, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack2(fighter, enemy), fighter, enemy, true));
             });
@@ -1319,14 +1362,14 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction, ic
 }
 
 function changeCharacterPlayerFirst(currentFighter, thisPartyMember, enemy) {
-    this.icon = "icons/switch icon.png";
     displayParty(thisPartyMember, enemy, false, null, null);
     hideBattleButtons();
     timeouts.push(setTimeout(playerTurn, typeText(`${thisPartyMember.name} enters the ring!`, true), thisPartyMember, enemy));
 }
 
 function changeCharacterEnemyFirst(currentFighter, thisPartyMember, enemy) {
-    this.icon = "icons/switch icon.png";
+    turns++;
+    console.log(turns);
     displayParty(thisPartyMember, enemy, false, null, null);
     hideBattleButtons();
     timeouts.push(setTimeout(enemyTurn, typeText(`${thisPartyMember.name} takes ${currentFighter.name}'s place.`, true), thisPartyMember, enemy));
@@ -1448,6 +1491,10 @@ function gameOver() {
     timeouts.push(setTimeout(typeText, typeText("You are out of party members.", true), "GAME OVER - Press the restart button to try again.", true));
 }
 
+function victory() {
+    typeText("You won good job.", true);
+}
+
 function damageAnimation(player, enemy, wasPlayerTurn) {
     if (player != null && enemy != null) {
         displayCurrentFighters(player, enemy);
@@ -1482,6 +1529,10 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
         animationUsed = true;
     }
 
+    if (wasPlayerTurn != null && wasPlayerTurn) {
+        turns++;
+        console.log(turns);
+    }
     if (animationUsed && (player != null || enemy != null)) timeouts.push(setTimeout(checkBattleStatus, damageSpeed, player, enemy, wasPlayerTurn));
     else if (player != null || enemy != null) checkBattleStatus(player, enemy, wasPlayerTurn);
     else if (animationUsed) return damageSpeed;
@@ -1599,6 +1650,22 @@ function areaSelect() {
             timeouts.push(setTimeout(displayAreaSelection, typeText(message, true), minibossPool, 0));
         }
         
+    }
+    else {
+        if (finalBoss.hp == 0) {
+            victory();
+        }
+        else {
+            let message1 = "The three guards have been defeated, and the gate is wide open. Your party heals with confidence.";
+            healParty();
+            let message2 = "You enter a giant room, at the end is a throne of fire seating the most evil looking dude you ever laid eyes on. " +
+            '"So you have come to defeat me. Mwahaha! The day I am defeated is the day I laugh at an iFunny (c) meme!"';
+            timeouts.push(setTimeout(function() {
+                timeouts.push(setTimeout(function() {
+                    timeouts.push(setTimeout(playerTurn, typeText(message2, true), null, finalBoss));
+                }, damageAnimation(null, null, null)));
+            }, typeText(message1, true)));
+        }
     }
 }
                                         // Main Functions
