@@ -380,11 +380,11 @@ button {
 #area3 {grid-column: 3 / 4; grid-row: 1 / 2;}
 
 .areaPicture {
+    height: 80%;
     width: 90%;
-    aspect-ratio: 1 / 1;
-    display: block;
     margin: auto;
-
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
     box-sizing: border-box;
     border: 3px solid black;
 }

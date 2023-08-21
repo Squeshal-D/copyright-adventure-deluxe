@@ -1057,13 +1057,13 @@ function addAllEnemiesToPool() {
     const shrek = new Shrek(); shrek.refresh(); fightPool.push(shrek);
     const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
-    party = fightPool.slice(); bowersStatus = 1;
+    // party = fightPool.slice(); bowersStatus = 1;
     minibossPool = [];
     const thanos = new Thanos(); thanos.refresh(); minibossPool.push(thanos);
     const herobrine = new Herobrine(); herobrine.refresh(); minibossPool.push(herobrine);
     const sans = new Sans(); sans.refresh(); minibossPool.push(sans);
-    fightPool = [];
-    minibossPool = [];
+    // fightPool = [];
+    // minibossPool = [];
     const hitsat = new HitSat(); hitsat.refresh(); finalBoss = hitsat;
 }
 
