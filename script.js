@@ -11,6 +11,7 @@ const buttonHoverSound = new Audio("sounds/buttonHover.wav");
 const victorySound = new Audio("sounds/win.wav");
 const deathSound = new Audio("sounds/death.wav");
 const gameOverSound = new Audio("sounds/gameOver.wav");
+const secretSound = new Audio("sounds/secret.wav");
 
 const PLAYER_ID = 0;
 const BLART_ID = 1;
@@ -83,7 +84,7 @@ function Character() {
     }
 
     this.attack1Info = function(user, target) {
-        return "";
+        return "(15-25 dmg)";
     }
 
     this.attack2 = function(user, target) {
@@ -110,7 +111,10 @@ function Character() {
     }
 
     this.attack2Info = function(user, target) {
-        return "";
+        if (target.id == BOWERS_ID) return "(?)";
+        else if (bowersStatus == 0) return "(50%)";
+        else if (bowersStatus == 1) return "(100%)";
+        return "(0%)";
     }
 }
 
@@ -150,10 +154,18 @@ function Blart() {
         return typeText(message, true);
     }
 
+    this.attack1Info = function(user, target) {
+        return "(0/40 dmg) (0/20 self dmg)";
+    }
+
     this.attack2 = function(user, target) {
         target.changehp(-25);
         user.changehp(-10);
         return typeText(`${user.name} headbutts ${target.name} for 25 dmg, but recieves 10 dmg in recoil!`, true);
+    }
+
+    this.attack2Info = function(user, target) {
+        return "(25 dmg) (10 self dmg)";
     }
 }
 
@@ -201,6 +213,10 @@ function Wick() {
         return message1Time + (swings + 1)*5*textSpeed + message2Time;
     }
 
+    this.attack1Info = function(user, target) {
+        return "(0-? dmg)";
+    }
+
     this.attack2 = function(user, target) {
         let chance = 10/target.hp;
         let roll = Math.random();
@@ -246,6 +262,11 @@ function Derrek() {
         }
     }
 
+    this.attack1Info = function(user, target) {
+        if (target.hp < 30) return "(kill)";
+        return "(15 dmg)";
+    }
+
     this.attack2 = function(user, target) {
         let message = `${user.name} clips ${target.name} with a freaking airplane for 25 damage...`;
         target.changehp(-25);
@@ -256,6 +277,10 @@ function Derrek() {
         else message += " and lands the plane safely!";
 
         return typeText(message, true);
+    }
+
+    this.attack2Info = function(user, target) {
+        return "(25 dmg) (20% death)";
     }
 }
 
@@ -286,6 +311,11 @@ function Bowers() {
             target.changehp(-15);
             return typeText(`${user.name} ambushed ${target.name}. They weren't surprised, but got a fat spank for 15 damage.`, true);
         }
+    }
+
+    this.attack1Info = function(user, target) {
+        if (target.hp == target.maxhp) return "(30 dmg)";
+        return "(15 dmg)";
     }
 
     this.attack2 = function(user, target) {
@@ -354,6 +384,10 @@ function Chief() {
         return message1Time + (shots + 1)*textSpeed + message2Time;
     }
 
+    this.attack1Info = function(user, target) {
+        return "(~16 dmg)";
+    }
+
     this.attack2 = function(user, target) {
         if (user.charging == 0) {
             user.charging = 2;
@@ -364,6 +398,10 @@ function Chief() {
             target.changehp(-40);
             return typeText(`${user.name} fires the spartan laser at ${target.name} for 40 damage!`, true);
         }
+    }
+
+    this.attack2Info = function(user, target) {
+        return "(40 dmg) (2 turns)";
     }
 }
 
@@ -461,6 +499,10 @@ function Shrek() {
         timeouts.push(setTimeout(typeText, message1Time + (shots + 1)*5*textSpeed, message2, false));
         target.changehp(-6*hits);
         return message1Time + (shots + 1)*5*textSpeed + message2Time;
+    }
+
+    this.attack2Info = function(user, target) {
+        return "(0-30 dmg)";
     }
 }
 
@@ -596,7 +638,7 @@ function Ramsay() {
 
     this.attack1Info = function(user, target) {
         if (user.move1name == "Heal Self") return `(${user.meals} left)`;
-        return "";
+        return "(15 dmg)";
     }
 
     function defaultAttack2(user, target) {
@@ -1007,6 +1049,7 @@ function setVolumes(vol) {
     victorySound.volume = vol/100;
     deathSound.volume = vol/100;
     gameOverSound.volume = vol/100;
+    secretSound.volume = vol/100;
 }
 
 function changeGameSpeed(speed) {
