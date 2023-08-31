@@ -549,6 +549,39 @@ function Washington() {
 
     this.attack2 = function(user, target) {
         if (user.musketLoaded) {
+            if (target.id == LENNIE_ID) {
+                target.changehp(-300);
+                user.musketLoaded = false;
+                stopPlaySound(secretSound);
+                let messages = [
+                    `${user.name} and ${target.name} go down to the river and sit down.`,
+                    `"Tell me about the rabbits, ${user.name}," said ${target.name}.`,
+                    `"Well, we gonna get a little place. We'll have a cow..."`,
+                    `${user.name} raises the musket with quivering hands.`,
+                    `${user.name} continued, "an' down the flat we'll have a... little piece alfalfa..."`,
+                    `"For the rabbits!" ${target.name} shouted.`,
+                    `"For the rabbits," ${user.name} repeated.`,
+                    `"And I get to tend the rabbits."`,
+                    `"An' you get to tend the rabbits."`,
+                    `${target.name} giggled with happiness. "An' live on the fatta the lan'."`,
+                    `"Yes."`,
+                    `${user.name} aims the musket where the spine and skull are joined.`,
+                    `"When we gonna do it, ${user.name}?" asked ${target.name}.`,
+                    `"Gonna do it soon."`,
+                    `${user.name} pulled the trigger. The crash of the shot rolled up and down the hills.`
+                ];
+                continueMessage(0);
+                function continueMessage(index) {
+                    if (index >= messages.length) {
+                        if (party.includes(user)) damageAnimation(user, target, true);
+                        else damageAnimation(user, target, false);
+                    }
+                    else {
+                        timeouts.push(setTimeout(continueMessage, typeText(messages[index], true), index + 1));
+                    }
+                }
+                return 9999999999;
+            }
             target.changehp(-40);
             user.musketLoaded = false;
             return typeText(`${user.name} fires a musket at ${target.name} for 40 damage!`, true);
@@ -907,7 +940,7 @@ function HitSat() {
     this.description = "Worst Guy Ever Made";
     this.quest = "The Final Battle.";
     this.entrance = "";
-    this.maxhp = 500;
+    this.maxhp = 300;
 
     this.boss = true;
 
@@ -990,7 +1023,7 @@ function HitSat() {
 
                                         // Utility Functions
 function clearAllTimeouts() {
-    // console.log(`There were ${timeouts.length} timeouts.`);
+    console.log(`There were ${timeouts.length} timeouts.`);
     for (let i = 0; i < timeouts.length; i++) {
         clearTimeout(timeouts[i]);
     }
@@ -1539,6 +1572,7 @@ function victory() {
 }
 
 function damageAnimation(player, enemy, wasPlayerTurn) {
+    let currentDamageSpeed = damageSpeed;
     if (player != null && enemy != null) {
         displayCurrentFighters(player, enemy);
         displayParty(player, enemy, false, null, null);
@@ -1558,10 +1592,10 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
         let difference = character.hp - character.displayhp;
         if (difference > 0) healSound.play();
         else if (difference < 0) damageSound.play();
-        for (let tick = 0; tick < damageSpeed; tick += TICK_RATE) {
+        for (let tick = 0; tick < currentDamageSpeed; tick += TICK_RATE) {
             timeouts.push(setTimeout(function() {
-                if (tick + TICK_RATE >= damageSpeed) character.displayhp = character.hp;
-                else character.displayhp += TICK_RATE*difference/damageSpeed;
+                if (tick + TICK_RATE >= currentDamageSpeed) character.displayhp = character.hp;
+                else character.displayhp += TICK_RATE*difference/currentDamageSpeed;
                 let maxhp = character.maxhp;
                 let displayhp = character.displayhp;
                 let healthBarColor = getHealthBarColor(displayhp, maxhp);
@@ -1576,9 +1610,9 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
         turns++;
         console.log(turns);
     }
-    if (animationUsed && (player != null || enemy != null)) timeouts.push(setTimeout(checkBattleStatus, damageSpeed, player, enemy, wasPlayerTurn));
+    if (animationUsed && (player != null || enemy != null)) timeouts.push(setTimeout(checkBattleStatus, currentDamageSpeed, player, enemy, wasPlayerTurn));
     else if (player != null || enemy != null) checkBattleStatus(player, enemy, wasPlayerTurn);
-    else if (animationUsed) return damageSpeed;
+    else if (animationUsed) return currentDamageSpeed;
     return 0;
 }
 
