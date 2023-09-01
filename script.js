@@ -161,6 +161,12 @@ function Blart() {
     this.attack2 = function(user, target) {
         target.changehp(-25);
         user.changehp(-10);
+        if (target.id == THANOS_ID && !target.dazed) {
+            stopPlaySound(secretSound);
+            target.dazed = true;
+            return typeText(`${user.name} went for the head. ${target.name} recieves 25 dmg, and is dazed to the point of impaired motor skills. ` +
+            `${user.name} recieves 10 dmg in recoil.`, true);
+        }
         return typeText(`${user.name} headbutts ${target.name} for 25 dmg, but recieves 10 dmg in recoil!`, true);
     }
 
@@ -218,6 +224,11 @@ function Wick() {
     }
 
     this.attack2 = function(user, target) {
+        if (target.id == SANS_ID && !target.snapped) {
+            stopPlaySound(secretSound);
+            target.snapped = true;
+            return typeText(`${user.name} snaps ${target.name}'s neck! Wait, they actually just snapped ${target.name}'s whacking bone!`, true);
+        }
         let chance = 10/target.hp;
         let roll = Math.random();
         if (roll <= chance) {
@@ -291,6 +302,7 @@ function Bowers() {
     this.name = "John Bowers";
     this.description = "Disher of Discipline";
     this.quest = "Visit CVCHS.";
+    this.questPicture = "places/cvchs.png";
     this.entrance = "You've arrived in the senior lot. Something isn't right. The gate is closed. You look at the time."
     + " Would anyone be willing to fight at 8:01? You turn around when, \"HEY! I've caught you!\"";
     this.maxhp = 50;
@@ -331,7 +343,7 @@ function Bowers() {
             message += ` ${target.name} was inspired a little and healed 10 hp.`;
         }
         else {
-            target.changehp(-150);
+            target.changehp(-120);
             message += ` ${target.name} was so annoyed that they got CLAPPED for 120 damage!`;
         }
         user.spokenTo.push(target);
@@ -395,6 +407,12 @@ function Chief() {
         }
         else {
             user.charging = 0;
+            if (target.id == SANS_ID) {
+                stopPlaySound(secretSound);
+                target.dodgesLeft -= 2;
+                target.changehp(-40);
+                return typeText(`${user.name} fires the Gaster Blaster at ${target.name} 3 times!`, true);
+            }
             target.changehp(-40);
             return typeText(`${user.name} fires the spartan laser at ${target.name} for 40 damage!`, true);
         }
@@ -437,6 +455,11 @@ function Lennie() {
         let damage = Math.floor(1250/target.maxhp);
         if (damage > 25) damage = 25;
         target.changehp(-damage);
+        if (target.id == THANOS_ID && !target.crushed) {
+            stopPlaySound(secretSound);
+            target.crushed = true;
+            return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage! ${target.name} can no longer snap!`, true);
+        }
         return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`, true);
     }
 
@@ -719,7 +742,8 @@ function Thanos() {
     this.name = "Thanos";
     this.description = "Thicc Purple Man";
     this.quest = "Fight the Powerful One.";
-    this.entrance = "The Powerful One rolls up to you in a purple truck and does a few donuts to demonstrate his power. He steps out, wearing a bracelet so large it even "
+    this.entrance = "The Powerful One rolls up to you in a purple truck and does a few donuts to demonstrate his power. "
+        + "He steps out, wearing a bracelet so large it even "
         + "covers his whole hand. \"I once destroyed half the universe, and now I will destroy all of you.\"";
     this.maxhp = 200;
 
@@ -735,12 +759,17 @@ function Thanos() {
     this.meals = 5;
 
     this.stolenAttack = null;
+    this.crushed = false;       // Snap
+    this.dazed = false;         // Thanos Car
 
     this.attack1 = function(user, target) {
         let move = Math.floor(2 * Math.random());
         if (move == 0) {
-            target.changehp(-Math.ceil(target.hp/2));
-            return typeText(`${user.name} snaps their fingers! ${target.name}'s hp has been halved.`, true);
+            if (!user.crushed) {
+                target.changehp(-Math.ceil(target.hp/2));
+                return typeText(`${user.name} snaps their fingers! ${target.name}'s hp has been halved.`, true);
+            }
+            else return typeText(`${user.name} tries to snap, but cannot due to a hand injury!`, true);
         }
         else {
             if (user.charging != 0) return user.stolenAttack(user, target);
@@ -758,8 +787,14 @@ function Thanos() {
     this.attack2 = function(user, target) {
         let move = Math.floor(2 * Math.random());
         if (move == 1) {
-            target.changehp(-20);
-            return typeText(`${user.name} hits ${target.name} with the THANOS CAR for 20 damage!`, true);
+            if (!user.dazed) {
+                target.changehp(-20);
+                return typeText(`${user.name} hits ${target.name} with the THANOS CAR for 20 damage!`, true);
+            }
+            else {
+                user.changehp(-10);
+                return typeText(`${user.name} tries to drive the THANOS CAR, but crashes and takes 10 damage!`, true)
+            }
         }
         else {
             let newhp = Math.ceil(target.maxhp * Math.random());
@@ -850,6 +885,7 @@ function Sans() {
     this.move2desc = "Party swap disabled / Some random stuff";
 
     this.boneWhacks = 0;
+    this.snapped = false;  // Bone Whack
 
     function getDodgeMessage(dodger) {
         let message = "";
@@ -880,6 +916,12 @@ function Sans() {
         let dodgeMessageTime = getTypeTextTime(dodgeMessage);
         let move = Math.floor(2 * Math.random());
         if (move == 0) {
+            if (user.snapped) {
+                let message = `${user.name} takes out their whacking bone, but it's snapped in half!`;
+                let messageTime = getTypeTextTime(message);
+                timeouts.push(setTimeout(typeText, typeText(dodgeMessage, true), message, true));
+                return dodgeMessageTime + messageTime;
+            }
             let damage = 10 + 5*user.boneWhacks;
             user.boneWhacks++;
             target.changehp(-damage);
@@ -1203,9 +1245,9 @@ function getTypeTextTime(message) {
 }
 
 function replaceText(oldText, newText) {
-    wholeText = $("#text").html();
-    replaceIndex = wholeText.lastIndexOf(oldText);
-    modifiedText = wholeText.substring(0, replaceIndex) + newText + wholeText.substring(replaceIndex + oldText.length);
+    let wholeText = $("#text").html();
+    let replaceIndex = wholeText.lastIndexOf(oldText);
+    let modifiedText = wholeText.substring(0, replaceIndex) + newText + wholeText.substring(replaceIndex + oldText.length);
     $("#text").html(modifiedText);
 }
 
@@ -1254,6 +1296,7 @@ function displayAreaSelection(allFights, offset) {
     for (let i = currentOffset; i < currentOffset + 3 && i < allFights.length; i++) {
         areaSelectButtons[i%3].html(allFights[i].quest);
         areaSelectButtons[i%3].off("click").on("click", function () {
+            stopPlaySound(selectSound);
             displayAreaSelection([], 0);
             enemyEntrance(allFights[i]);
             removeEnemyFromPool(allFights[i]);
@@ -1445,7 +1488,7 @@ function changeCharacterPlayerFirst(currentFighter, thisPartyMember, enemy) {
 
 function changeCharacterEnemyFirst(currentFighter, thisPartyMember, enemy) {
     turns++;
-    console.log(turns);
+    console.log(`Turn ${turns}`);
     displayParty(thisPartyMember, enemy, false, null, null);
     hideBattleButtons();
     timeouts.push(setTimeout(enemyTurn, typeText(`${thisPartyMember.name} takes ${currentFighter.name}'s place.`, true), thisPartyMember, enemy));
@@ -1608,7 +1651,7 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
 
     if (wasPlayerTurn != null && wasPlayerTurn) {
         turns++;
-        console.log(turns);
+        console.log(`Turn ${turns}`);
     }
     if (animationUsed && (player != null || enemy != null)) timeouts.push(setTimeout(checkBattleStatus, currentDamageSpeed, player, enemy, wasPlayerTurn));
     else if (player != null || enemy != null) checkBattleStatus(player, enemy, wasPlayerTurn);
