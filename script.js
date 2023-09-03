@@ -78,6 +78,11 @@ function Character() {
     }
 
     this.attack1 = function(user, target) {
+        if (target.id == HEROBRINE_ID && !target.house) {
+            stopPlaySound(secretSound);
+            target.house = true;
+            return typeText(`${user.name} punches... a tree! They build a house out of the wood, and the party is now safe from any monsters!`, true);
+        }
         let randInt = 15 + Math.floor(Math.random()* 11);
         target.changehp(-randInt);
         return typeText(`${user.name} punches ${target.name} for ${randInt} damage!`, true);
@@ -596,7 +601,7 @@ function Washington() {
                 continueMessage(0);
                 function continueMessage(index) {
                     if (index >= messages.length) {
-                        if (party.includes(user)) damageAnimation(user, target, true);
+                        if (!party.includes(target)) damageAnimation(user, target, true);
                         else damageAnimation(user, target, false);
                     }
                     else {
@@ -822,9 +827,14 @@ function Herobrine() {
     this.move2name = "TNT / Noclip";
     this.move2desc = "4 damage to all party members / Make enemy attack random party member";
 
+    this.house = false;
+
     this.attack1 = function(user, target) {
         let move = Math.floor(2 * Math.random());
         if (move == 0) {
+            if (user.house) {
+                return typeText(`${user.name} spawned a creeper, but ${target.name} was safe inside the house!`, true);
+            }
             let damage = Math.ceil(30 * Math.random());
             target.changehp(-damage);
             return typeText(`${user.name} spawned a creeper behind ${target.name}! They take ${damage} damage from the explosion!`, true);
@@ -849,7 +859,7 @@ function Herobrine() {
             let attackUsed = 0;
 
             if (target.charging != 0) attackUsed = charging;
-            else if (target.id == 9) attackUsed = 1; // Can't use Ramsay 'Gordonmet'
+            else if (target.id == RAMSAY_ID) attackUsed = 1; // Can't use Ramsay 'Gordonmet'
             else if (Math.floor(Math.random()*2) == 0) attackUsed = 1;
             else attackUsed = 2;
 
@@ -890,7 +900,7 @@ function Sans() {
     function getDodgeMessage(dodger) {
         let message = "";
         if (dodger.dodgesLeft < dodger.lastDodges) {
-            message += "Sike! Sans dodged it, ";
+            message += `Sike! ${dodger.name} dodged it, `;
             if (dodger.dodgesLeft > 6) message += "and seems very ready to dodge another.";
             else if (dodger.dodgesLeft > 4) message += "but seems to have slowed down a little.";
             else if (dodger.dodgesLeft > 2) message += "but is looking very tired.";

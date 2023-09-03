@@ -207,8 +207,8 @@ button {
 .partyMemberContainer img,
 .partyMemberContainer .progressBarLabel,
 .partyMemberContainer .partyName {
-    outline: 1px solid black;
-    margin: 1px;
+    border: 1px solid black;
+    box-sizing: border-box;
 }
 
 .partyMemberContainer .progressBar,
