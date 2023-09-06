@@ -11,6 +11,7 @@ const buttonHoverSound = new Audio("sounds/buttonHover.wav");
 const victorySound = new Audio("sounds/win.wav");
 const deathSound = new Audio("sounds/death.wav");
 const gameOverSound = new Audio("sounds/gameOver.wav");
+const secretSound = new Audio("sounds/secret.wav");
 
 const PLAYER_ID = 0;
 const BLART_ID = 1;
@@ -38,12 +39,14 @@ var finalBoss;
 
 var partySwapDisabled = false;
 var bowersStatus = 0; // 0 = alive, 1 = in party, 2 = dead
+var turns = 0;
                                         // Characters
 function Character() {
     this.id = 0;
     this.name = playerName;
     this.description = playerDesc;
     this.quest = "";
+    this.questPicture = "icons/cad icon.png";
     this.entrance = "";
     this.picture = "characterPictures/empty character.png";
     this.maxhp = 50;
@@ -56,7 +59,7 @@ function Character() {
     this.move1name = "Punch";
     this.move1desc = "How normal. <br>(15-25 dmg)";
     this.move2name = "Juul";
-    this.move2desc = "A sophomore classic. <br>50% chance to trigger a Bowers attack (30 dmg).";
+    this.move2desc = "A sophomore classic. <br>May trigger a Bowers attack (30 dmg).";
 
     this.changehp = function(damage) {
         this.hp += damage;
@@ -75,26 +78,48 @@ function Character() {
     }
 
     this.attack1 = function(user, target) {
+        if (target.id == HEROBRINE_ID && !target.house) {
+            stopPlaySound(secretSound);
+            target.house = true;
+            return typeText(`${user.name} punches... a tree! They build a house out of the wood, and the party is now safe from any monsters!`, true);
+        }
         let randInt = 15 + Math.floor(Math.random()* 11);
         target.changehp(-randInt);
         return typeText(`${user.name} punches ${target.name} for ${randInt} damage!`, true);
     }
 
     this.attack1Info = function(user, target) {
-        return "";
+        return "(15-25 dmg)";
     }
 
     this.attack2 = function(user, target) {
-        let randInt = Math.floor(Math.random() * 2);
-        if (randInt == 1) {
-            target.changehp(-30);
-            return typeText(`Bowers senses the vape and springs out of nowhere! He annihilates ${target.name} for 30 dmg!`, true);
+        if (target.id == BOWERS_ID) {
+            user.changehp(-999);
+            return typeText(`What have you done!? ${target.name} sends ${user.name} to the shadow realm for 999 damage! Remember, kids, Mr. Bowers ` + 
+            `says that vaping is bad for you and can cause lung damage or something.`, true);
         }
-        else return typeText(`${user.name} vapes undisturbed. ${target.name} is jealous.`, true);
+        else if (bowersStatus == 0) {
+            let randInt = Math.floor(Math.random() * 2);
+            if (randInt == 1) {
+                target.changehp(-30);
+                return typeText(`Bowers senses the vape and springs out of nowhere! He annihilates ${target.name} for 30 dmg!`, true);
+            }
+            else return typeText(`${user.name} vapes undisturbed. ${target.name} is jealous.`, true);
+        }
+        else if (bowersStatus == 1) {
+            target.changehp(-30);
+            return typeText(`${user.name} vapes, and Bowers is enraged by the sight of the pen! He disciplines ${target.name} for 30 damage.`, true);
+        }
+        else {
+            return typeText(`${user.name} vapes in memory of Mr. Bowers.`, true);
+        }
     }
 
     this.attack2Info = function(user, target) {
-        return "";
+        if (target.id == BOWERS_ID) return "(?)";
+        else if (bowersStatus == 0) return "(50%)";
+        else if (bowersStatus == 1) return "(100%)";
+        return "(0%)";
     }
 }
 
@@ -134,10 +159,24 @@ function Blart() {
         return typeText(message, true);
     }
 
+    this.attack1Info = function(user, target) {
+        return "(0/40 dmg) (0/20 self dmg)";
+    }
+
     this.attack2 = function(user, target) {
         target.changehp(-25);
-        user.changehp(-15);
+        user.changehp(-10);
+        if (target.id == THANOS_ID && !target.dazed) {
+            stopPlaySound(secretSound);
+            target.dazed = true;
+            return typeText(`${user.name} went for the head. ${target.name} recieves 25 dmg, and is dazed to the point of impaired motor skills. ` +
+            `${user.name} recieves 10 dmg in recoil.`, true);
+        }
         return typeText(`${user.name} headbutts ${target.name} for 25 dmg, but recieves 10 dmg in recoil!`, true);
+    }
+
+    this.attack2Info = function(user, target) {
+        return "(25 dmg) (10 self dmg)";
     }
 }
 
@@ -185,7 +224,16 @@ function Wick() {
         return message1Time + (swings + 1)*5*textSpeed + message2Time;
     }
 
+    this.attack1Info = function(user, target) {
+        return "(0-? dmg)";
+    }
+
     this.attack2 = function(user, target) {
+        if (target.id == SANS_ID && !target.snapped) {
+            stopPlaySound(secretSound);
+            target.snapped = true;
+            return typeText(`${user.name} snaps ${target.name}'s neck! Wait, they actually just snapped ${target.name}'s whacking bone!`, true);
+        }
         let chance = 10/target.hp;
         let roll = Math.random();
         if (roll <= chance) {
@@ -230,6 +278,11 @@ function Derrek() {
         }
     }
 
+    this.attack1Info = function(user, target) {
+        if (target.hp < 30) return "(kill)";
+        return "(15 dmg)";
+    }
+
     this.attack2 = function(user, target) {
         let message = `${user.name} clips ${target.name} with a freaking airplane for 25 damage...`;
         target.changehp(-25);
@@ -241,6 +294,10 @@ function Derrek() {
 
         return typeText(message, true);
     }
+
+    this.attack2Info = function(user, target) {
+        return "(25 dmg) (20% death)";
+    }
 }
 
 function Bowers() {
@@ -250,6 +307,7 @@ function Bowers() {
     this.name = "John Bowers";
     this.description = "Disher of Discipline";
     this.quest = "Visit CVCHS.";
+    this.questPicture = "places/cvchs.png";
     this.entrance = "You've arrived in the senior lot. Something isn't right. The gate is closed. You look at the time."
     + " Would anyone be willing to fight at 8:01? You turn around when, \"HEY! I've caught you!\"";
     this.maxhp = 50;
@@ -272,6 +330,11 @@ function Bowers() {
         }
     }
 
+    this.attack1Info = function(user, target) {
+        if (target.hp == target.maxhp) return "(30 dmg)";
+        return "(15 dmg)";
+    }
+
     this.attack2 = function(user, target) {
         let spokenToEnemy = 0;
         for (let i = 0; i < user.spokenTo.length; i++) if (user.spokenTo[i] == target) spokenToEnemy++;
@@ -285,7 +348,7 @@ function Bowers() {
             message += ` ${target.name} was inspired a little and healed 10 hp.`;
         }
         else {
-            target.changehp(-150);
+            target.changehp(-120);
             message += ` ${target.name} was so annoyed that they got CLAPPED for 120 damage!`;
         }
         user.spokenTo.push(target);
@@ -306,6 +369,7 @@ function Chief() {
     this.name = "Master Chief";
     this.description = "AKA Halo";
     this.quest = "Hijack a space vessel.";
+    this.questPicture = "places/space.png";
     this.entrance = "Hijacking a space vessel would surely cause the government to send special forces to stop you, and they do!"
     + " As soon as the armored warrior approaches you, he informs you that what you are doing is 'illegal' and that he needs a weapon.";
     this.maxhp = 100;
@@ -337,6 +401,10 @@ function Chief() {
         return message1Time + (shots + 1)*textSpeed + message2Time;
     }
 
+    this.attack1Info = function(user, target) {
+        return "(~16 dmg)";
+    }
+
     this.attack2 = function(user, target) {
         if (user.charging == 0) {
             user.charging = 2;
@@ -344,9 +412,19 @@ function Chief() {
         }
         else {
             user.charging = 0;
+            if (target.id == SANS_ID) {
+                stopPlaySound(secretSound);
+                target.dodgesLeft -= 2;
+                target.changehp(-40);
+                return typeText(`${user.name} fires the Gaster Blaster at ${target.name} 3 times!`, true);
+            }
             target.changehp(-40);
             return typeText(`${user.name} fires the spartan laser at ${target.name} for 40 damage!`, true);
         }
+    }
+
+    this.attack2Info = function(user, target) {
+        return "(40 dmg) (2 turns)";
     }
 }
 
@@ -357,6 +435,7 @@ function Lennie() {
     this.name = "Lennie Small";
     this.description = "Pro Rabbit Tender";
     this.quest = "Go into that big ol barn over there.";
+    this.questPicture = "places/farm.png";
     this.entrance = "The huge barn door slowly opens and you peek inside. By the light through the door you can see the figure of a large man"
     + " petting a small mouse. \"You're lookin' pretty soft.\" He drops the lifeless rodent and lumbers toward you.";
     this.maxhp = 80;
@@ -381,6 +460,11 @@ function Lennie() {
         let damage = Math.floor(1250/target.maxhp);
         if (damage > 25) damage = 25;
         target.changehp(-damage);
+        if (target.id == THANOS_ID && !target.crushed) {
+            stopPlaySound(secretSound);
+            target.crushed = true;
+            return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage! ${target.name} can no longer snap!`, true);
+        }
         return typeText(`${user.name} crushes ${target.name}'s hand for ${damage} damage!`, true);
     }
 
@@ -398,6 +482,7 @@ function Shrek() {
     this.name = "Shrek";
     this.description = "Dreamwork's All-Star";
     this.quest = "Go hunt in the swamp.";
+    this.questPicture = "places/swamp.png";
     this.entrance = "Swamps are dangerous places. What makes this swamp even more dangerous, though, is that it is HIS swamp."
     + " \"Oh hello there! Shrek here, and I'm ticked off!\"";
     this.maxhp = 80;
@@ -442,6 +527,10 @@ function Shrek() {
         timeouts.push(setTimeout(typeText, message1Time + (shots + 1)*5*textSpeed, message2, false));
         target.changehp(-6*hits);
         return message1Time + (shots + 1)*5*textSpeed + message2Time;
+    }
+
+    this.attack2Info = function(user, target) {
+        return "(0-30 dmg)";
     }
 }
 
@@ -488,6 +577,39 @@ function Washington() {
 
     this.attack2 = function(user, target) {
         if (user.musketLoaded) {
+            if (target.id == LENNIE_ID) {
+                target.changehp(-300);
+                user.musketLoaded = false;
+                stopPlaySound(secretSound);
+                let messages = [
+                    `${user.name} and ${target.name} go down to the river and sit down.`,
+                    `"Tell me about the rabbits, ${user.name}," said ${target.name}.`,
+                    `"Well, we gonna get a little place. We'll have a cow..."`,
+                    `${user.name} raises the musket with quivering hands.`,
+                    `${user.name} continued, "an' down the flat we'll have a... little piece alfalfa..."`,
+                    `"For the rabbits!" ${target.name} shouted.`,
+                    `"For the rabbits," ${user.name} repeated.`,
+                    `"And I get to tend the rabbits."`,
+                    `"An' you get to tend the rabbits."`,
+                    `${target.name} giggled with happiness. "An' live on the fatta the lan'."`,
+                    `"Yes."`,
+                    `${user.name} aims the musket where the spine and skull are joined.`,
+                    `"When we gonna do it, ${user.name}?" asked ${target.name}.`,
+                    `"Gonna do it soon."`,
+                    `${user.name} pulled the trigger. The crash of the shot rolled up and down the hills.`
+                ];
+                continueMessage(0);
+                function continueMessage(index) {
+                    if (index >= messages.length) {
+                        if (!party.includes(target)) damageAnimation(user, target, true);
+                        else damageAnimation(user, target, false);
+                    }
+                    else {
+                        timeouts.push(setTimeout(continueMessage, typeText(messages[index], true), index + 1));
+                    }
+                }
+                return 9999999999;
+            }
             target.changehp(-40);
             user.musketLoaded = false;
             return typeText(`${user.name} fires a musket at ${target.name} for 40 damage!`, true);
@@ -577,7 +699,7 @@ function Ramsay() {
 
     this.attack1Info = function(user, target) {
         if (user.move1name == "Heal Self") return `(${user.meals} left)`;
-        return "";
+        return "(15 dmg)";
     }
 
     function defaultAttack2(user, target) {
@@ -625,7 +747,8 @@ function Thanos() {
     this.name = "Thanos";
     this.description = "Thicc Purple Man";
     this.quest = "Fight the Powerful One.";
-    this.entrance = "The Powerful One rolls up to you in a purple truck and does a few donuts to demonstrate his power. He steps out, wearing a bracelet so large it even "
+    this.entrance = "The Powerful One rolls up to you in a purple truck and does a few donuts to demonstrate his power. "
+        + "He steps out, wearing a bracelet so large it even "
         + "covers his whole hand. \"I once destroyed half the universe, and now I will destroy all of you.\"";
     this.maxhp = 200;
 
@@ -641,12 +764,17 @@ function Thanos() {
     this.meals = 5;
 
     this.stolenAttack = null;
+    this.crushed = false;       // Snap
+    this.dazed = false;         // Thanos Car
 
     this.attack1 = function(user, target) {
         let move = Math.floor(2 * Math.random());
         if (move == 0) {
-            target.changehp(-Math.ceil(target.hp/2));
-            return typeText(`${user.name} snaps their fingers! ${target.name}'s hp has been halved.`, true);
+            if (!user.crushed) {
+                target.changehp(-Math.ceil(target.hp/2));
+                return typeText(`${user.name} snaps their fingers! ${target.name}'s hp has been halved.`, true);
+            }
+            else return typeText(`${user.name} tries to snap, but cannot due to a hand injury!`, true);
         }
         else {
             if (user.charging != 0) return user.stolenAttack(user, target);
@@ -664,8 +792,14 @@ function Thanos() {
     this.attack2 = function(user, target) {
         let move = Math.floor(2 * Math.random());
         if (move == 1) {
-            target.changehp(-20);
-            return typeText(`${user.name} hits ${target.name} with the THANOS CAR for 20 damage!`, true);
+            if (!user.dazed) {
+                target.changehp(-20);
+                return typeText(`${user.name} hits ${target.name} with the THANOS CAR for 20 damage!`, true);
+            }
+            else {
+                user.changehp(-10);
+                return typeText(`${user.name} tries to drive the THANOS CAR, but crashes and takes 10 damage!`, true)
+            }
         }
         else {
             let newhp = Math.ceil(target.maxhp * Math.random());
@@ -693,9 +827,14 @@ function Herobrine() {
     this.move2name = "TNT / Noclip";
     this.move2desc = "4 damage to all party members / Make enemy attack random party member";
 
+    this.house = false;
+
     this.attack1 = function(user, target) {
         let move = Math.floor(2 * Math.random());
         if (move == 0) {
+            if (user.house) {
+                return typeText(`${user.name} spawned a creeper, but ${target.name} was safe inside the house!`, true);
+            }
             let damage = Math.ceil(30 * Math.random());
             target.changehp(-damage);
             return typeText(`${user.name} spawned a creeper behind ${target.name}! They take ${damage} damage from the explosion!`, true);
@@ -720,7 +859,7 @@ function Herobrine() {
             let attackUsed = 0;
 
             if (target.charging != 0) attackUsed = charging;
-            else if (target.id == 9) attackUsed = 1; // Can't use Ramsay 'Gordonmet'
+            else if (target.id == RAMSAY_ID) attackUsed = 1; // Can't use Ramsay 'Gordonmet'
             else if (Math.floor(Math.random()*2) == 0) attackUsed = 1;
             else attackUsed = 2;
 
@@ -756,11 +895,12 @@ function Sans() {
     this.move2desc = "Party swap disabled / Some random stuff";
 
     this.boneWhacks = 0;
+    this.snapped = false;  // Bone Whack
 
     function getDodgeMessage(dodger) {
         let message = "";
         if (dodger.dodgesLeft < dodger.lastDodges) {
-            message += "Sike! Sans dodged it, ";
+            message += `Sike! ${dodger.name} dodged it, `;
             if (dodger.dodgesLeft > 6) message += "and seems very ready to dodge another.";
             else if (dodger.dodgesLeft > 4) message += "but seems to have slowed down a little.";
             else if (dodger.dodgesLeft > 2) message += "but is looking very tired.";
@@ -786,6 +926,12 @@ function Sans() {
         let dodgeMessageTime = getTypeTextTime(dodgeMessage);
         let move = Math.floor(2 * Math.random());
         if (move == 0) {
+            if (user.snapped) {
+                let message = `${user.name} takes out their whacking bone, but it's snapped in half!`;
+                let messageTime = getTypeTextTime(message);
+                timeouts.push(setTimeout(typeText, typeText(dodgeMessage, true), message, true));
+                return dodgeMessageTime + messageTime;
+            }
             let damage = 10 + 5*user.boneWhacks;
             user.boneWhacks++;
             target.changehp(-damage);
@@ -846,14 +992,14 @@ function HitSat() {
     this.description = "Worst Guy Ever Made";
     this.quest = "The Final Battle.";
     this.entrance = "";
-    this.maxhp = 500;
+    this.maxhp = 300;
 
     this.boss = true;
 
     this.move1name = "Devil's Lettuce / Laser Eyes / Nazi Punch";
     this.move1desc = "1/2 to do 30 dmg / 5 1/2 hit lasers, 8 dmg each / 15 - 30 damage";
     this.move2name = "Nazi Laser / Demon Headbutt / Words of Discouragement";
-    this.move2desc = "charge 1 turn, 40 damage / 30 damage, 10 recoil / 10 damage, 10 heal";
+    this.move2desc = "charge 1 turn, 50 damage / 30 damage, 15 recoil / 10 damage, 10 heal";
 
     this.fried = false;
 
@@ -861,7 +1007,10 @@ function HitSat() {
         let move = Math.floor(3 * Math.random());
         if (move == 0) {
             let message = `${user.name} rips the devil's lettuce!`;
-            if (bowersStatus == 1) message += ` John Bowers disapproves and slaps ${user.name} for 1 damage.`;
+            if (bowersStatus == 1) {
+                user.changehp(-1);
+                message += ` John Bowers disapproves and slaps ${user.name} for 1 damage.`;
+            }
             else if (Math.floor(Math.random() * 2) == 0) {
                 message += ` John Bowers returns from the depths of Hell to spank ${target.name} for 30 damage.`;
                 target.changehp(-30);
@@ -873,43 +1022,60 @@ function HitSat() {
             return typeText(message, true);
         }
         else if (move == 1) {
+            let hits = 0;
+            let shots = 0;
+            let message1 = `${user.name} fires their laser eyes! They hit ${hits}/${shots}`;
+            let message1Time = typeText(message1, true);
+            let message2 = " lasers!";
+            let message2Time = getTypeTextTime(message2);
+            const missChance = 0.5;
             
+            for (let i = 0; i < 5; i++) {
+                shots++;
+                if (Math.random() > missChance) {
+                    hits++;
+                    timeouts.push(setTimeout(replaceText, message1Time + shots*5*textSpeed, `${hits - 1}/${shots - 1}`, `${hits}/${shots}`));
+                }
+                else timeouts.push(setTimeout(replaceText, message1Time + shots*5*textSpeed, `${hits}/${shots - 1}`, `${hits}/${shots}`));
+            }
+            timeouts.push(setTimeout(typeText, message1Time + (shots + 1)*5*textSpeed, message2, false));
+            target.changehp(-8*hits);
+            return message1Time + (shots + 1)*5*textSpeed + message2Time;
         }
         else {
-            
+            let randInt = 15 + Math.floor(Math.random()* 16);
+            target.changehp(-randInt);
+            return typeText(`${user.name} nazi punches ${target.name} for ${randInt} damage!`, true);
         }
     }
 
     this.attack2 = function(user, target) {
-        user.hitOnThisTurn = false;
-        let dodgeMessage = getDodgeMessage(user);
-        let dodgeMessageTime = getTypeTextTime(dodgeMessage);
-        let move = Math.floor(2 * Math.random());
-        if (move == 1 && !partySwapDisabled) {
-            partySwapDisabled = true;
-            let message = `${user.name} locks ${target.name} into the ring!`;
-            let messageTime = getTypeTextTime(message);
-            timeouts.push(setTimeout(typeText, typeText(dodgeMessage, true), message, true));
-            return dodgeMessageTime + messageTime;
+        let move = Math.floor(3 * Math.random());
+        if (this.charging != 0) {
+            target.changehp(-50);
+            this.charging = 0;
+            return typeText(`${user.name} fires the nazi laser of doom at ${target.name} for 50 damage!`, true);
+        }
+        else if (move == 0) {
+            this.charging = 2;
+            return typeText(`${user.name} charges the nazi laser of doom!`, true);
+        }
+        else if (move == 1) {
+            target.changehp(-30);
+            user.changehp(-15);
+            return typeText(`${user.name} demon headbutts ${target.name} for 30 damage, and recieves 15 damage in recoil!`, true);
         }
         else {
-            let message = `${user.name} has censored this attack.`;
-            let messageTime = getTypeTextTime(message);
-            for (let i = 0; i < party.length; i++) {
-                if (party[i] != target && Math.floor(Math.random()*2) == 0) {
-                    party[i].changehp(5 - Math.floor(Math.random()*21));
-                }
-            }
-            target.changehp(10 - Math.random()*31);
-            timeouts.push(setTimeout(typeText, typeText(dodgeMessage, true), message, true));
-            return dodgeMessageTime + messageTime;
+            target.changehp(-10);
+            user.changehp(10);
+            return typeText(`${user.name} spread words of discouragement. They feed off of ${target.name}'s sadness in the form of 10 hp.`, true)
         }
     }
 }
 
                                         // Utility Functions
 function clearAllTimeouts() {
-    // console.log(`There were ${timeouts.length} timeouts.`);
+    console.log(`There were ${timeouts.length} timeouts.`);
     for (let i = 0; i < timeouts.length; i++) {
         clearTimeout(timeouts[i]);
     }
@@ -921,6 +1087,7 @@ function setStartConditions() {
     party = [];
     partySwapDisabled = false;
     bowersStatus = 0;
+    turns = 0;
     displayParty(null, null, false, null, null);
     addAllEnemiesToPool();
     clearTextBox();
@@ -967,6 +1134,7 @@ function setVolumes(vol) {
     victorySound.volume = vol/100;
     deathSound.volume = vol/100;
     gameOverSound.volume = vol/100;
+    secretSound.volume = vol/100;
 }
 
 function changeGameSpeed(speed) {
@@ -1017,11 +1185,14 @@ function addAllEnemiesToPool() {
     const shrek = new Shrek(); shrek.refresh(); fightPool.push(shrek);
     const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
-    // party = fightPool.slice();
+    // party = fightPool.slice(); bowersStatus = 1;
     minibossPool = [];
     const thanos = new Thanos(); thanos.refresh(); minibossPool.push(thanos);
     const herobrine = new Herobrine(); herobrine.refresh(); minibossPool.push(herobrine);
     const sans = new Sans(); sans.refresh(); minibossPool.push(sans);
+    // fightPool = [];
+    // minibossPool = [];
+    const hitsat = new HitSat(); hitsat.refresh(); finalBoss = hitsat;
 }
 
 function removeEnemyFromPool(enemy) {
@@ -1084,9 +1255,9 @@ function getTypeTextTime(message) {
 }
 
 function replaceText(oldText, newText) {
-    wholeText = $("#text").html();
-    replaceIndex = wholeText.lastIndexOf(oldText);
-    modifiedText = wholeText.substring(0, replaceIndex) + newText + wholeText.substring(replaceIndex + oldText.length);
+    let wholeText = $("#text").html();
+    let replaceIndex = wholeText.lastIndexOf(oldText);
+    let modifiedText = wholeText.substring(0, replaceIndex) + newText + wholeText.substring(replaceIndex + oldText.length);
     $("#text").html(modifiedText);
 }
 
@@ -1135,11 +1306,12 @@ function displayAreaSelection(allFights, offset) {
     for (let i = currentOffset; i < currentOffset + 3 && i < allFights.length; i++) {
         areaSelectButtons[i%3].html(allFights[i].quest);
         areaSelectButtons[i%3].off("click").on("click", function () {
+            stopPlaySound(selectSound);
             displayAreaSelection([], 0);
             enemyEntrance(allFights[i]);
             removeEnemyFromPool(allFights[i]);
         });
-        // Setting image for area goes here
+        areaPictures[i%3].attr("src", `${allFights[i].questPicture}`);
         areaSelectButtons[i%3].css("display", "block");
         areaPictures[i%3].css("display", "block");
     }
@@ -1239,14 +1411,14 @@ function displayBattleButtons(fighter, enemy, setButtonFunctions) {
             buttons[0].off("click").on("click", function() {
                 stopPlaySound(selectSound);
                 clearAllTimeouts();
-                hideBattleButtons(); 
+                hideBattleButtons();
                 displayParty(fighter, enemy, false, null, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack1(fighter, enemy), fighter, enemy, true));
             });
             buttons[1].off("click").on("click", function() {
                 stopPlaySound(selectSound);
                 clearAllTimeouts();
-                hideBattleButtons(); 
+                hideBattleButtons();
                 displayParty(fighter, enemy, false, null, null);
                 timeouts.push(setTimeout(damageAnimation, fighter.attack2(fighter, enemy), fighter, enemy, true));
             });
@@ -1319,14 +1491,14 @@ function displayParty(currentFighter, enemy, previewOnHover, onClickFunction, ic
 }
 
 function changeCharacterPlayerFirst(currentFighter, thisPartyMember, enemy) {
-    this.icon = "icons/switch icon.png";
     displayParty(thisPartyMember, enemy, false, null, null);
     hideBattleButtons();
     timeouts.push(setTimeout(playerTurn, typeText(`${thisPartyMember.name} enters the ring!`, true), thisPartyMember, enemy));
 }
 
 function changeCharacterEnemyFirst(currentFighter, thisPartyMember, enemy) {
-    this.icon = "icons/switch icon.png";
+    turns++;
+    console.log(`Turn ${turns}`);
     displayParty(thisPartyMember, enemy, false, null, null);
     hideBattleButtons();
     timeouts.push(setTimeout(enemyTurn, typeText(`${thisPartyMember.name} takes ${currentFighter.name}'s place.`, true), thisPartyMember, enemy));
@@ -1448,7 +1620,12 @@ function gameOver() {
     timeouts.push(setTimeout(typeText, typeText("You are out of party members.", true), "GAME OVER - Press the restart button to try again.", true));
 }
 
+function victory() {
+    typeText("You won good job.", true);
+}
+
 function damageAnimation(player, enemy, wasPlayerTurn) {
+    let currentDamageSpeed = damageSpeed;
     if (player != null && enemy != null) {
         displayCurrentFighters(player, enemy);
         displayParty(player, enemy, false, null, null);
@@ -1468,10 +1645,10 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
         let difference = character.hp - character.displayhp;
         if (difference > 0) healSound.play();
         else if (difference < 0) damageSound.play();
-        for (let tick = 0; tick < damageSpeed; tick += TICK_RATE) {
+        for (let tick = 0; tick < currentDamageSpeed; tick += TICK_RATE) {
             timeouts.push(setTimeout(function() {
-                if (tick + TICK_RATE >= damageSpeed) character.displayhp = character.hp;
-                else character.displayhp += TICK_RATE*difference/damageSpeed;
+                if (tick + TICK_RATE >= currentDamageSpeed) character.displayhp = character.hp;
+                else character.displayhp += TICK_RATE*difference/currentDamageSpeed;
                 let maxhp = character.maxhp;
                 let displayhp = character.displayhp;
                 let healthBarColor = getHealthBarColor(displayhp, maxhp);
@@ -1482,9 +1659,13 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
         animationUsed = true;
     }
 
-    if (animationUsed && (player != null || enemy != null)) timeouts.push(setTimeout(checkBattleStatus, damageSpeed, player, enemy, wasPlayerTurn));
+    if (wasPlayerTurn != null && wasPlayerTurn) {
+        turns++;
+        console.log(`Turn ${turns}`);
+    }
+    if (animationUsed && (player != null || enemy != null)) timeouts.push(setTimeout(checkBattleStatus, currentDamageSpeed, player, enemy, wasPlayerTurn));
     else if (player != null || enemy != null) checkBattleStatus(player, enemy, wasPlayerTurn);
-    else if (animationUsed) return damageSpeed;
+    else if (animationUsed) return currentDamageSpeed;
     return 0;
 }
 
@@ -1599,6 +1780,22 @@ function areaSelect() {
             timeouts.push(setTimeout(displayAreaSelection, typeText(message, true), minibossPool, 0));
         }
         
+    }
+    else {
+        if (finalBoss.hp == 0) {
+            victory();
+        }
+        else {
+            let message1 = "The three guards have been defeated, and the gate is wide open. Your party heals with confidence.";
+            healParty();
+            let message2 = "You enter a giant room, at the end is a throne of fire seating the most evil looking dude you ever laid eyes on. " +
+            '"So you have come to defeat me. Mwahaha! The day I am defeated is the day I laugh at an iFunny (c) meme!"';
+            timeouts.push(setTimeout(function() {
+                timeouts.push(setTimeout(function() {
+                    timeouts.push(setTimeout(playerTurn, typeText(message2, true), null, finalBoss));
+                }, damageAnimation(null, null, null)));
+            }, typeText(message1, true)));
+        }
     }
 }
                                         // Main Functions
