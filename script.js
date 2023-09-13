@@ -1,7 +1,7 @@
 var gameSpeed = 0;  // 0-2, 2 is fastest
 var textSpeed = 30;
 var damageSpeed = 1000;
-var smartEnemies = false;
+var smartEnemies = 0;  // 0 = random, 1 = smart
 
 const textScrollSound = new Audio("sounds/textScroll.wav");
 const selectSound = new Audio("sounds/select.mp3");
@@ -40,6 +40,8 @@ var finalBoss;
 var partySwapDisabled = false;
 var bowersStatus = 0; // 0 = alive, 1 = in party, 2 = dead
 var turns = 0;
+var enemyAttacksTotal = 0;
+var enemyAttacksSmart = 0;
                                         // Characters
 function Character() {
     this.id = 0;
@@ -121,6 +123,16 @@ function Character() {
         else if (bowersStatus == 1) return "(100%)";
         return "(0%)";
     }
+
+    this.smartAttack = function (user, target) {
+        switch (bowersStatus) {
+            case 1: return this.attack2(user, target);
+            case 2: return this.attack1(user, target);
+            default: 
+                if (target.hp <= 20 || Math.floor(Math.random() * 2) == 0) return this.attack1(user, target);
+                else return this.attack2(user, target);
+        }
+    }
 }
 
 function Blart() {
@@ -177,6 +189,15 @@ function Blart() {
 
     this.attack2Info = function(user, target) {
         return "(25 dmg) (10 self dmg)";
+    }
+
+    this.smartAttack = function (user, target) {
+        if (target.hp <= 25 || (target.hp <= 50 && user.hp > 30)) return this.attack2(user, target);
+        else if (target.hp <= 40 && user.hp <= 20) return this.attack1(user, target);
+        else {
+            if (Math.floor(Math.random() * 2) == 0) return this.attack1(user, target);
+            else return this.attack2(user, target);
+        }
     }
 }
 
@@ -248,6 +269,11 @@ function Wick() {
         if (chance > 100) chance = 100;
         return `(${chance}% kill)`
     }
+
+    this.smartAttack = function(user, target) {
+        if (10/target.hp >= 0.6 || (Math.random() < 10/target.hp)) return this.attack2(user, target);
+        else return this.attack1(user, target);
+    }
 }
 
 function Derrek() {
@@ -297,6 +323,16 @@ function Derrek() {
 
     this.attack2Info = function(user, target) {
         return "(25 dmg) (20% death)";
+    }
+
+    this.smartAttack = function(user, target) {
+        if (target.hp <= 30) return this.attack1(user, target);
+        else if (user.hp <= 20) return this.attack2(user, target);
+        else if (target.hp <= 45) return this.attack1(user, target);
+        else {
+            if (Math.floor(Math.random() * 3) < 2) return this.attack2(user, target);
+            else return this.attack1(user, target);
+        }
     }
 }
 
@@ -359,6 +395,10 @@ function Bowers() {
         let spokenToEnemy = 0;
         for (let i = 0; i < user.spokenTo.length; i++) if (user.spokenTo[i] == target) spokenToEnemy++;
         return `(${spokenToEnemy%3 + 1} / 3)`
+    }
+
+    this.smartAttack = function(user, target) {
+        return this.attack1(user, target);
     }
 }
 
@@ -426,6 +466,11 @@ function Chief() {
     this.attack2Info = function(user, target) {
         return "(40 dmg) (2 turns)";
     }
+
+    this.smartAttack = function(user, target) {
+        if (target.hp <= 30 || user.hp <= 30) return this.attack1(user, target);
+        else return this.attack2(user, target);
+    }
 }
 
 function Lennie() {
@@ -472,6 +517,11 @@ function Lennie() {
         let damage = Math.floor(1250/target.maxhp);
         if (damage > 25) damage = 25;
         return `(${damage} dmg)`
+    }
+
+    this.smartAttack = function(user, target) {
+        if (40 - Math.floor(40*user.hp/user.maxhp) > Math.floor(1250/target.maxhp)) return this.attack1(user, target);
+        else return this.attack2(user, target);
     }
 }
 
@@ -531,6 +581,15 @@ function Shrek() {
 
     this.attack2Info = function(user, target) {
         return "(0-30 dmg)";
+    }
+
+    this.smartAttack = function(user, target) {
+        if (party.includes(this)) {
+            if (4 * party.length >= target.hp || 4 * party.length > 15) return this.attack2(user, target);
+            else return this.attack1(user, target);
+        }
+        else if (target.hp <= 4) return this.attack1(user, target);
+        else return this.attack2(user, target);
     }
 }
 
@@ -623,6 +682,15 @@ function Washington() {
     this.attack2Info = function(user, target) {
         if (user.musketLoaded) return "(ready)";
         else return "(reload)";
+    }
+
+    this.smartAttack = function(user, target) {
+        let damage = -20 + Math.floor(0.6 * target.maxhp);
+        if (target.hp <= damage) return this.attack1(user, target);
+        else if (user.musketLoaded && damage < 40) return this.attack2(user, target);
+        else if (damage >= 20) return this.attack1(user, target);
+        else if (user.hp >= 30 && Math.floor(Math.random() * 2) == 0) return this.attack2(user, target);
+        else return this.attack1(user, target);
     }
 }
 
@@ -738,6 +806,15 @@ function Ramsay() {
     this.attack1 = defaultAttack1;
 
     this.attack2 = defaultAttack2;
+
+    this.smartAttack = function(user, target) {
+        if (target.hp <= 15) return this.attack1(user, target);
+        else if (user.hp <= 30 && Math.floor(Math.random * 3) < 2 &&
+            ((target.id == BOWERS_ID && !target.spokenTo.includes(user)) || (target.id == DERREK_ID && user.hp > 10)|| 
+            target.id == PLAYER_ID || (target.id == SHREK_ID && party.length < 5) || (target.id == WASHINGTON_ID && user.hp > 20) || target.id == WICK_ID))
+                return this.attack2(user, target);
+        else return this.attack1(user, target);
+    }
 }
 
 function Thanos() {
@@ -1088,6 +1165,8 @@ function setStartConditions() {
     partySwapDisabled = false;
     bowersStatus = 0;
     turns = 0;
+    enemyAttacksTotal = 0;
+    enemyAttacksSmart = 0;
     displayParty(null, null, false, null, null);
     addAllEnemiesToPool();
     clearTextBox();
@@ -1117,6 +1196,24 @@ function setOptionButtonFunctions() {
                 gameSpeedButtons[x].css("background-color", "lightgrey");
             }
             gameSpeedButtons[i].css("background-color", "grey");
+        });
+    }
+
+    const enemyAIButtons = [$("#random"), $("#smart")];
+    enemyAIButtons[smartEnemies].css("background-color", "grey");
+    for (let i = 0; i < enemyAIButtons.length; i++) {
+        enemyAIButtons[i].off("mouseenter").on("mouseenter", function() {
+            enemyAIButtons[i].css("background-color", "grey");
+        });
+        enemyAIButtons[i].off("mouseleave").on("mouseleave", function() {
+            if (smartEnemies != i) enemyAIButtons[i].css("background-color", "lightgrey");
+        });
+        enemyAIButtons[i].off("click").on("click", function() {
+            changeEnemyAI(i);
+            for (let x = 0; x < enemyAIButtons.length; x++) {
+                enemyAIButtons[x].css("background-color", "lightgrey");
+            }
+            enemyAIButtons[i].css("background-color", "grey");
         });
     }
 
@@ -1151,6 +1248,10 @@ function changeGameSpeed(speed) {
         textSpeed = 5;
         damageSpeed = 250;
     }
+}
+
+function changeEnemyAI(mode) {
+    smartEnemies = mode;
 }
 
 function binaryAnimation() {
@@ -1695,9 +1796,17 @@ function enemyTurn(player, enemy) {
     displayTurnIndicator(false);
     displayParty(player, enemy, false, null, null);
     if (enemy.charging == 0) {
-        let randAttack = Math.floor(Math.random() * 2);
-        if (randAttack == 0) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
-        else timeouts.push(setTimeout(damageAnimation, enemy.attack2(enemy, player), player, enemy, false));
+        enemyAttacksTotal++;
+        if (smartEnemies == 0) {
+            let randAttack = Math.floor(Math.random() * 2);
+            if (randAttack == 0) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
+            else timeouts.push(setTimeout(damageAnimation, enemy.attack2(enemy, player), player, enemy, false));
+        }
+        else {
+            enemyAttacksSmart++;
+            timeouts.push(setTimeout(damageAnimation, enemy.smartAttack(enemy, player), player, enemy, false));
+        }
+        console.log(`Smart attack ratio: ${enemyAttacksSmart}/${enemyAttacksTotal}`);
     }
     else {
         if (enemy.charging == 1) timeouts.push(setTimeout(damageAnimation, enemy.attack1(enemy, player), player, enemy, false));
