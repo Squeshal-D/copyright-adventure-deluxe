@@ -686,6 +686,8 @@ function Washington() {
 
     this.smartAttack = function(user, target) {
         let damage = -20 + Math.floor(0.6 * target.maxhp);
+        if (damage > 40) damage = 40;
+        else if (damage < 10) damage = 10;
         if (target.hp <= damage) return this.attack1(user, target);
         else if (user.musketLoaded && damage < 40) return this.attack2(user, target);
         else if (damage >= 20) return this.attack1(user, target);
@@ -694,6 +696,10 @@ function Washington() {
     }
 }
 
+// Ramsay's Gordonmet move makes him function differently, since it is a multi-step move.
+// We store his starting moveset with the 'default' functions.
+// When Gordonmet is selected, we swap out the 'default' moveset with the 'altered' moveset and refresh the combat buttons.
+// The reverse is done when Cancel is selected after Gordonmet.
 function Ramsay() {
     Character.call(this);
 
@@ -844,9 +850,11 @@ function Thanos() {
     this.crushed = false;       // Snap
     this.dazed = false;         // Thanos Car
 
+    this.subMove = 0;
+
     this.attack1 = function(user, target) {
-        let move = Math.floor(2 * Math.random());
-        if (move == 0) {
+        if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
+        if (user.subMove == 0 && user.charging == 0) {
             if (!user.crushed) {
                 target.changehp(-Math.ceil(target.hp/2));
                 return typeText(`${user.name} snaps their fingers! ${target.name}'s hp has been halved.`, true);
@@ -857,18 +865,27 @@ function Thanos() {
             if (user.charging != 0) return user.stolenAttack(user, target);
             let messageTime = typeText(`${user.name} temporarily transforms into ${target.name}!`, true);
 
-            if (Math.floor(Math.random()*2) == 0) user.stolenAttack = target.attack1;
-            else user.stolenAttack = target.attack2;
-            timeouts.push(setTimeout(function() {
-                timeouts.push(setTimeout(damageAnimation, user.stolenAttack(user, target), target, user, false));
-            }, messageTime));
+            if (smartEnemies && target.id != CHIEF_ID) {
+                timeouts.push(setTimeout(function() {
+                    timeouts.push(setTimeout(damageAnimation, target.smartAttack(user, target), target, user, false));
+                }, messageTime));
+            }
+            else {
+                if (Math.floor(Math.random()*2) == 0) user.stolenAttack = target.attack1;
+                else user.stolenAttack = target.attack2;
+                timeouts.push(setTimeout(function() {
+                    timeouts.push(setTimeout(damageAnimation, user.stolenAttack(user, target), target, user, false));
+                }, messageTime));
+            }
+            
             return 9999999999;
         }
     }
 
     this.attack2 = function(user, target) {
-        let move = Math.floor(2 * Math.random());
-        if (move == 1) {
+        if (user.charging != 0) return user.attack1(user, target);
+        if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
+        if (user.subMove == 0) {
             if (!user.dazed) {
                 target.changehp(-20);
                 return typeText(`${user.name} hits ${target.name} with the THANOS CAR for 20 damage!`, true);
@@ -882,6 +899,32 @@ function Thanos() {
             let newhp = Math.ceil(target.maxhp * Math.random());
             target.changehp(newhp - target.hp);
             return typeText(`${user.name} rearranges ${target.name}'s bodily particles! They now have ${newhp} hp.`, true);
+        }
+    }
+
+    this.smartAttack = function(user, target) {
+        if (target.hp <= 20 && !user.dazed) {
+            user.subMove = 0;
+            return this.attack2(user, target);
+        }
+        else if (target.hp >= 60 && !user.crushed) {
+            user.subMove = 0;
+            return this.attack1(user, target);
+        }
+        else if (target.hp/target.maxhp >= 0.9 && user.maxhp >= 80) {
+            user.subMove = 1;
+            return this.attack2(user, target);
+        }
+        else if (!crushed && 
+            ((target.id == LENNIE_ID && user.hp > 100) || target.id == WICK_ID ||
+            (target.id == DERREK_ID && target.hp > 30) || (target.id == BOWERS_ID && target.hp != target.maxhp) ||
+            target.id == SHREK_ID || (target.id == WASHINGTON_ID && !user.musketLoaded) || user.id == RAMSAY_ID)) {
+                user.subMove = 0;
+                return this.attack2(user, target);
+        }
+        else {
+            user.subMove = 1;
+            return this.attack1(user, target);
         }
     }
 }
@@ -904,11 +947,13 @@ function Herobrine() {
     this.move2name = "TNT / Noclip";
     this.move2desc = "4 damage to all party members / Make enemy attack random party member";
 
-    this.house = false;
+    this.house = false;  // Creeper
+
+    this.subMove = 0;
 
     this.attack1 = function(user, target) {
-        let move = Math.floor(2 * Math.random());
-        if (move == 0) {
+        if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
+        if (subMove == 0) {
             if (user.house) {
                 return typeText(`${user.name} spawned a creeper, but ${target.name} was safe inside the house!`, true);
             }
@@ -924,8 +969,8 @@ function Herobrine() {
     }
 
     this.attack2 = function(user, target) {
-        let move = Math.floor(2 * Math.random());
-        if (move == 1) {
+        if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
+        if (subMove == 1) {
             for (let i = 0; i < party.length; i++) {
                 party[i].changehp(-4);
             }
@@ -934,18 +979,50 @@ function Herobrine() {
         else {
             let messageTime = typeText(`${user.name} noclips into ${target.name} and possesses them!`, true);
             let attackUsed = 0;
-
-            if (target.charging != 0) attackUsed = charging;
-            else if (target.id == RAMSAY_ID) attackUsed = 1; // Can't use Ramsay 'Gordonmet'
-            else if (Math.floor(Math.random()*2) == 0) attackUsed = 1;
-            else attackUsed = 2;
-
             let victim = party[Math.floor(Math.random() * party.length)];
-            timeouts.push(setTimeout(function() {
-                if (attackUsed == 1) timeouts.push(setTimeout(damageAnimation, target.attack1(target, victim), target, user, false));
-                else timeouts.push(setTimeout(damageAnimation, target.attack2(target, victim), target, user, false));
-            }, messageTime));
+
+            if (victim == target) {
+                return typeText(`${target.name} resisted the influence!`, true);
+            }
+            else if (target.id == RAMSAY_ID) { // Can't use Ramsay 'Gordonmet'
+                timeouts.push(setTimeout(damageAnimation, target.attack1(target, victim), target, user, false));
+            }
+            else if (smartEnemies && target.charging == 0) {
+                timeouts.push(setTimeout(damageAnimation, target.smartAttack(target, victim), target, user, false));
+            }
+            else {
+                if (target.charging != 0) attackUsed = charging;
+                else if (Math.floor(Math.random()*2) == 0) attackUsed = 1;
+                else attackUsed = 2;
+
+                timeouts.push(setTimeout(function() {
+                    if (attackUsed == 1) timeouts.push(setTimeout(damageAnimation, target.attack1(target, victim), target, user, false));
+                    else timeouts.push(setTimeout(damageAnimation, target.attack2(target, victim), target, user, false));
+                }, messageTime));
+            }
             return 9999999999;
+        }
+    }
+
+    this.smartAttack = function(user, target) {
+        if (target.hp <= 4 || (party.length > 4 || Math.floor(Math.random() * 5) == 0)) {
+            user.subMove = 0;
+            return this.attack2(user, target);
+        }
+        else if (target.hp <= 15 && !user.house) {
+            user.subMove = 0;
+            return this.attack1(user, target);
+        }
+        else if (party.length > 3 &&
+            (target.id == BLART_ID || (target.id == PLAYER_ID && bowersStatus == 1) || target.id == DERREK_ID ||
+            (target.id == LENNIE_ID && target.hp <= 40) || (target.id == SHREK_ID && party.length >= 5) ||
+            (target.id == WASHINGTON_ID && target.musketLoaded) || target.charging != 0)) {
+                user.subMove = 1;
+                return this.attack2(user, target);
+        }
+        else {
+            user.subMove = 1;
+            return this.attack1(user, target);
         }
     }
 }
