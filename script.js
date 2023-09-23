@@ -915,7 +915,7 @@ function Thanos() {
             user.subMove = 1;
             return this.attack2(user, target);
         }
-        else if (!crushed && 
+        else if (!user.crushed && 
             ((target.id == LENNIE_ID && user.hp > 100) || target.id == WICK_ID ||
             (target.id == DERREK_ID && target.hp > 30) || (target.id == BOWERS_ID && target.hp != target.maxhp) ||
             target.id == SHREK_ID || (target.id == WASHINGTON_ID && !user.musketLoaded) || user.id == RAMSAY_ID)) {
@@ -970,7 +970,7 @@ function Herobrine() {
 
     this.attack2 = function(user, target) {
         if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
-        if (subMove == 1) {
+        if (subMove == 0) {
             for (let i = 0; i < party.length; i++) {
                 party[i].changehp(-4);
             }
@@ -1044,12 +1044,14 @@ function Sans() {
     this.boss = true;
 
     this.move1name = "Bone Whack / Gravity";
-    this.move1desc = "10 damage + 5 on use / damage enemy and random party member";
+    this.move1desc = "10 damage + 5 on use / 20 damage to enemy and random party member";
     this.move2name = "Lockup / Censored";
     this.move2desc = "Party swap disabled / Some random stuff";
 
     this.boneWhacks = 0;
     this.snapped = false;  // Bone Whack
+
+    this.subMove = 0;
 
     function getDodgeMessage(dodger) {
         let message = "";
@@ -1078,8 +1080,10 @@ function Sans() {
         user.hitOnThisTurn = false;
         let dodgeMessage = getDodgeMessage(user);
         let dodgeMessageTime = getTypeTextTime(dodgeMessage);
-        let move = Math.floor(2 * Math.random());
-        if (move == 0) {
+        if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
+        else if (user.snapped) user.subMove = 1;
+
+        if (user.subMove == 0) {
             if (user.snapped) {
                 let message = `${user.name} takes out their whacking bone, but it's snapped in half!`;
                 let messageTime = getTypeTextTime(message);
@@ -1115,8 +1119,9 @@ function Sans() {
         user.hitOnThisTurn = false;
         let dodgeMessage = getDodgeMessage(user);
         let dodgeMessageTime = getTypeTextTime(dodgeMessage);
-        let move = Math.floor(2 * Math.random());
-        if (move == 1 && !partySwapDisabled) {
+        if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
+
+        if (user.subMove == 0 && !partySwapDisabled) {
             partySwapDisabled = true;
             let message = `${user.name} locks ${target.name} into the ring!`;
             let messageTime = getTypeTextTime(message);
@@ -1136,6 +1141,27 @@ function Sans() {
             return dodgeMessageTime + messageTime;
         }
     }
+
+    this.smartAttack = function(user, target) {
+        if (10 + 5*user.boneWhacks >= target.hp && !user.snapped) {
+            user.subMove = 0;
+            return this.attack1(user, target);
+        }
+        else if (target.hp <= 20 && party.length > 4) {
+            user.subMove = 1;
+            return this.attack1(user, target);
+        }
+        else if (partySwapDisabled && !snapped) {
+            user.subMove = 0;
+            return this.attack1(user, target);
+        }
+        else {
+            user.subMove = Math.floor(Math.random() * 2);
+            if (party.length < 4) user.subMove = 0;
+            if (Math.floor(Math.random() * 2) == 0) return this.attack1(user, target);
+            else return this.attack2(user, target);
+        }
+    }
 }
 
 function HitSat() {
@@ -1151,15 +1177,15 @@ function HitSat() {
     this.boss = true;
 
     this.move1name = "Devil's Lettuce / Laser Eyes / Nazi Punch";
-    this.move1desc = "1/2 to do 30 dmg / 5 1/2 hit lasers, 8 dmg each / 15 - 30 damage";
+    this.move1desc = "1/2 to do 30 dmg / 5 1/2 hit lasers, 8 dmg each / 10 - 30 damage";
     this.move2name = "Nazi Laser / Demon Headbutt / Words of Discouragement";
     this.move2desc = "charge 1 turn, 50 damage / 30 damage, 15 recoil / 10 damage, 10 heal";
 
-    this.fried = false;
+    this.subMove = 0;
 
     this.attack1 = function(user, target) {
-        let move = Math.floor(3 * Math.random());
-        if (move == 0) {
+        if (!smartEnemies) user.subMove = Math.floor(3 * Math.random());
+        if (user.subMove == 0) {
             let message = `${user.name} rips the devil's lettuce!`;
             if (bowersStatus == 1) {
                 user.changehp(-1);
@@ -1171,11 +1197,10 @@ function HitSat() {
             }
             else {
                 message += ` ${user.name}'s brain turned into an egg being fried in a skillet.`;
-                user.fried = true;
             }
             return typeText(message, true);
         }
-        else if (move == 1) {
+        else if (user.subMove == 1) {
             let hits = 0;
             let shots = 0;
             let message1 = `${user.name} fires their laser eyes! They hit ${hits}/${shots}`;
@@ -1204,17 +1229,17 @@ function HitSat() {
     }
 
     this.attack2 = function(user, target) {
-        let move = Math.floor(3 * Math.random());
+        if (!smartEnemies) user.subMove = Math.floor(3 * Math.random());
         if (this.charging != 0) {
             target.changehp(-50);
             this.charging = 0;
             return typeText(`${user.name} fires the nazi laser of doom at ${target.name} for 50 damage!`, true);
         }
-        else if (move == 0) {
+        else if (user.subMove == 0) {
             this.charging = 2;
             return typeText(`${user.name} charges the nazi laser of doom!`, true);
         }
-        else if (move == 1) {
+        else if (user.subMove == 1) {
             target.changehp(-30);
             user.changehp(-15);
             return typeText(`${user.name} demon headbutts ${target.name} for 30 damage, and recieves 15 damage in recoil!`, true);
@@ -1225,11 +1250,35 @@ function HitSat() {
             return typeText(`${user.name} spread words of discouragement. They feed off of ${target.name}'s sadness in the form of 10 hp.`, true)
         }
     }
+
+    this.smartAttack = function(user, target) {
+        if (target.hp <= 10) {
+            user.subMove = 2;
+            return this.attack2(user, target);
+        }
+        else if (target.hp <= 20) {
+            user.subMove = 1 + Math.floor(Math.random() * 2);
+            return this.attack1(user, target);
+        }
+        else if (target.hp <= 30) {
+            user.subMove = 1;
+            return this.attack2(user, target);
+        }
+        else {
+            let availableMoves = [[1, 0], [2, 0], [0, 1], [1, 1]];
+            if (bowersStatus == 2) availableMoves.push([0, 0]);
+            if (user.maxhp - user.hp > 10) availableMoves.push([2, 1]);
+            let chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            user.subMove = chosenMove[0];
+            if (chosenMove[1] == 0) return this.attack1(user, target);
+            else return this.attack2(user, target);
+        }
+    }
 }
 
                                         // Utility Functions
 function clearAllTimeouts() {
-    console.log(`There were ${timeouts.length} timeouts.`);
+    // console.log(`There were ${timeouts.length} timeouts.`);
     for (let i = 0; i < timeouts.length; i++) {
         clearTimeout(timeouts[i]);
     }
@@ -1247,7 +1296,6 @@ function setStartConditions() {
     displayParty(null, null, false, null, null);
     addAllEnemiesToPool();
     clearTextBox();
-    setVolumes($("#volume").val());
     displayNameEntry(false);
     displayAreaSelection([], 0);
     hideBattleButtons();
@@ -1256,7 +1304,10 @@ function setStartConditions() {
 
 function setOptionButtonFunctions() {
     const restartButton = $("#restart");
-    restartButton.off("click").on("click", startNewGame);
+    restartButton.off("click").on("click", function() {
+        startNewGame();
+        stopPlaySound(selectSound);
+    });
 
     const gameSpeedButtons = [$("#normal"), $("#fast"), $("#ultra")];
     gameSpeedButtons[gameSpeed].css("background-color", "grey");
@@ -1294,6 +1345,8 @@ function setOptionButtonFunctions() {
         });
     }
 
+    $(".optionButton").on("click", function() {stopPlaySound(buttonHoverSound)});
+
     const volumeSlider = $("#volume");
     volumeSlider.off("input").on("input", function() {setVolumes(volumeSlider.val())});
     volumeSlider.off("change").on("change", function() {setVolumes(volumeSlider.val())});
@@ -1309,6 +1362,7 @@ function setVolumes(vol) {
     deathSound.volume = vol/100;
     gameOverSound.volume = vol/100;
     secretSound.volume = vol/100;
+    buttonHoverSound.play();
 }
 
 function changeGameSpeed(speed) {
@@ -1363,13 +1417,13 @@ function addAllEnemiesToPool() {
     const shrek = new Shrek(); shrek.refresh(); fightPool.push(shrek);
     const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
-    // party = fightPool.slice(); bowersStatus = 1;
+    party = fightPool.slice(); bowersStatus = 1;
     minibossPool = [];
     const thanos = new Thanos(); thanos.refresh(); minibossPool.push(thanos);
     const herobrine = new Herobrine(); herobrine.refresh(); minibossPool.push(herobrine);
     const sans = new Sans(); sans.refresh(); minibossPool.push(sans);
-    // fightPool = [];
-    // minibossPool = [];
+    fightPool = [];
+    minibossPool = [];
     const hitsat = new HitSat(); hitsat.refresh(); finalBoss = hitsat;
 }
 
@@ -1911,6 +1965,7 @@ function askForNameAndDescription() {
             playerName = nameField.value.trim();
             displayNameEntry(false);
             askForDescription();
+            stopPlaySound(selectSound);
         }
     };
 
@@ -1928,6 +1983,7 @@ function askForNameAndDescription() {
                 playerChar.description = playerDesc;
                 party.push(playerChar);
                 timeouts.push(setTimeout(areaSelect, typeText("Prepare to embark on your epicc quest...", true)));
+                stopPlaySound(selectSound);
             }
         };
         timeouts.push(setTimeout(displayNameEntry, typeText(descPrompt, true), true));
@@ -1992,6 +2048,7 @@ function startNewGame() {
 
 $(function() {
     setOptionButtonFunctions();
+    setVolumes($("#volume").val());
     binaryAnimation();
     startNewGame();
 })
