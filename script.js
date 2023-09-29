@@ -38,10 +38,15 @@ var minibossPool = [];
 var finalBoss;
 
 var partySwapDisabled = false;
-var bowersStatus = 0; // 0 = alive, 1 = in party, 2 = dead
+var bowersStatus = 0; // 0 = not encountered, 1 = in party, 2 = dead
+
 var turns = 0;
 var enemyAttacksTotal = 0;
 var enemyAttacksSmart = 0;
+var fightsWon = 0;
+var bossesKilled = 0;
+var finalBossKilled = 0;
+var scoreTotal = 0;
                                         // Characters
 function Character() {
     this.id = 0;
@@ -1293,6 +1298,9 @@ function setStartConditions() {
     turns = 0;
     enemyAttacksTotal = 0;
     enemyAttacksSmart = 0;
+    finalBossKilled = 0;
+    bossesKilled = 0;
+    fightsWon = 0;
     displayParty(null, null, false, null, null);
     addAllEnemiesToPool();
     clearTextBox();
@@ -1300,6 +1308,7 @@ function setStartConditions() {
     displayAreaSelection([], 0);
     hideBattleButtons();
     hideCurrentFighters();
+    calculateScore();
 }
 
 function setOptionButtonFunctions() {
@@ -1417,14 +1426,17 @@ function addAllEnemiesToPool() {
     const shrek = new Shrek(); shrek.refresh(); fightPool.push(shrek);
     const washington = new Washington(); washington.refresh(); fightPool.push(washington);
     const ramsay = new Ramsay(); ramsay.refresh(); fightPool.push(ramsay);
-    party = fightPool.slice(); bowersStatus = 1;
+    
     minibossPool = [];
     const thanos = new Thanos(); thanos.refresh(); minibossPool.push(thanos);
     const herobrine = new Herobrine(); herobrine.refresh(); minibossPool.push(herobrine);
     const sans = new Sans(); sans.refresh(); minibossPool.push(sans);
-    fightPool = [];
-    minibossPool = [];
+    
     const hitsat = new HitSat(); hitsat.refresh(); finalBoss = hitsat;
+
+    // party = fightPool.slice(); bowersStatus = 1;
+    // fightPool = [];
+    // minibossPool = [];
 }
 
 function removeEnemyFromPool(enemy) {
@@ -1442,6 +1454,26 @@ function getHealthBarColor(hp, maxhp) {
 function stopPlaySound(sound) {
     sound.currentTime = 0;
     sound.play();
+}
+
+function turnMultiplier() {
+    return 2 * (0.99 ** turns);
+}
+
+function smartMultiplier() {
+    if (enemyAttacksTotal == 0) return 1;
+    else return 1 + (enemyAttacksSmart/enemyAttacksTotal);
+}
+
+function calculateScore() {
+    scoreTotal = Math.floor((fightsWon + bossesKilled + finalBossKilled + (150 * party.length)) * turnMultiplier() * smartMultiplier());
+    $(`#fightsWon`).html(fightsWon);
+    $(`#partyMembers`).html(party.length * 150);
+    $(`#bossesSlain`).html(bossesKilled);
+    $(`#finalBossSlain`).html(finalBossKilled);
+    $(`#turnBonus`).html("x" + turnMultiplier().toFixed(2));
+    $(`#smartBonus`).html("x" + smartMultiplier().toFixed(2));
+    $(`#scoreTop`).html(`Score: ${scoreTotal}`);
 }
                                         // UI Functions
 // This function can be used as a `delay` parameter for setTimeout, to set an action after the message has been typed.
@@ -1748,19 +1780,29 @@ function checkBattleStatus(player, enemy, wasPlayerTurn) {
     if (enemy.hp <= 0) {
         if (enemy.id == BOWERS_ID) bowersStatus = 1;
         if (wasPlayerTurn) {
-            if (enemy.boss) enemyDead = `${enemy.name} was defeated! You won!`;
+            if (enemy.boss) {
+                enemyDead = `${enemy.name} was defeated! You won!`;
+                if (enemy == finalBoss) finalBossKilled = 1500;
+                else bossesKilled += 500;
+            }
             else {
                 enemyDead = `${enemy.name} was defeated and has joined the party!`;
                 enemy.refresh();
                 party.push(enemy);
+                fightsWon += 100;
             }
         }
         else {
-            if (enemy.boss) enemyDead = `${enemy.name} annihilated themselves. You won!`;
+            if (enemy.boss) {
+                enemyDead = `${enemy.name} annihilated themselves. You won!`;
+                if (enemy == finalBoss) finalBossKilled = 1500;
+                else bossesKilled += 500;
+            }
             else {
                 enemyDead = `${enemy.name} died during their own attack and joined the party!`;
                 enemy.refresh();
                 party.push(enemy);
+                fightsWon += 100;
             }
         }
     }
@@ -1848,12 +1890,18 @@ function healParty() {
 }
 
 function gameOver() {
+    calculateScore();
     gameOverSound.play();
-    timeouts.push(setTimeout(typeText, typeText("You are out of party members.", true), "GAME OVER - Press the restart button to try again.", true));
+    let message1 = "You are out of party members.";
+    let message2 = "GAME OVER - Press the restart button to try again.";
+    let message3 = `Final Score: ${scoreTotal}`;
+    typeText(message1, true);
+    timeouts.push(setTimeout(typeText, getTypeTextTime(message1), message2, true));
+    timeouts.push(setTimeout(typeText, getTypeTextTime(message1) + getTypeTextTime(message2), message3, true));
 }
 
 function victory() {
-    typeText("You won good job.", true);
+    timeouts.push(setTimeout(typeText, typeText("You won good job.", true), `Final Score: ${scoreTotal}`, true));
 }
 
 function damageAnimation(player, enemy, wasPlayerTurn) {
@@ -1902,6 +1950,7 @@ function damageAnimation(player, enemy, wasPlayerTurn) {
 }
 
 function playerTurn(player, enemy) {
+    calculateScore();
     displayCurrentFighters(player, enemy);
     displayTurnIndicator(true);
     if (player == null) {
@@ -1923,6 +1972,7 @@ function playerTurn(player, enemy) {
 }
 
 function enemyTurn(player, enemy) {
+    calculateScore();
     displayCurrentFighters(player, enemy);
     displayTurnIndicator(false);
     displayParty(player, enemy, false, null, null);
@@ -1992,6 +2042,7 @@ function askForNameAndDescription() {
 }
 
 function areaSelect() {
+    calculateScore();
     clearAllTimeouts();
     afterFightWholeParty();
     displayParty(null, null, false, null, null);
