@@ -11,15 +11,49 @@
     <body>
         <div id = "optionsBox">
             <button type="button" id="restart">Restart</button>
-            <div id="gameSpeedContainer">
+            <div id="gameSpeedContainer" class="optionContainer">
                 <div id="gameSpeedTop">Game Speed</div>
                 <div class="optionButton" id="normal">Normal</div>
                 <div class="optionButton" id="fast">Fast</div>
                 <div class="optionButton" id="ultra">Ultra</div>
             </div>
-            <div id="volumeContainer">
+            <div id="enemyAIContainer" class="optionContainer">
+                <div id="enemyAITop">Enemy Attacks</div>
+                <div class="optionButton" id="random">Random</div>
+                <div class="optionButton" id="smart">Smart</div>
+            </div>
+            <div id="volumeContainer" class="optionContainer">
                 <div id="volumeTop">- Volume +</div>
                 <input type="range" min="0" max="100" value="0" id="volume">
+            </div>
+            <div id="scoreContainer" class="optionContainer">
+                <div id="scoreTop">Score: -</div>
+                <table id="scoreTable">
+                    <tr>
+                        <th>Fights Won</th>
+                        <th id="fightsWon">-</th>
+                    </tr>
+                    <tr>
+                        <th>Party Members</th>
+                        <th id="partyMembers">-</th>
+                    </tr>
+                    <tr>
+                        <th>Bosses Slain</th>
+                        <th id="bossesSlain">-</th>
+                    </tr>
+                    <tr>
+                        <th>Final Boss Slain</th>
+                        <th id="finalBossSlain">-</th>
+                    </tr>
+                    <tr>
+                        <th>Turn Bonus</th>
+                        <th id="turnBonus">-</th>
+                    </tr>
+                    <tr>
+                        <th>Smart Atks Bonus</th>
+                        <th id="smartBonus">-</th>
+                    </tr>
+                </table>
             </div>
         </div>
 

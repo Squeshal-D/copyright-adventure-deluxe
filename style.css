@@ -14,6 +14,7 @@ body {
     height: 100%;
     background-color: rgb(54, 54, 54);
     margin: 0;
+    overflow: hidden;
 }
 
 button {
@@ -42,16 +43,13 @@ button {
     margin: auto;
 }
 
-#gameSpeedContainer {
+.optionContainer {
     width: 75%;
-    height: 10%;
-    display: grid;
-    grid-template-columns: 34% 33% auto;
-    grid-template-rows: 50% fit-content(1%);
     margin: auto;
+    padding-top: 3%;
 }
 
-#gameSpeedContainer * {
+.optionContainer * {
     width: 100%;
     height: 100%;
     text-align: center;
@@ -59,12 +57,20 @@ button {
     outline: 1px solid black;
 }
 
+#gameSpeedContainer {
+    height: 10%;
+    display: grid;
+    grid-template-columns: 34% 33% auto;
+    grid-template-rows: 50% fit-content(1%);
+    margin: auto;
+}
+
 #gameSpeedTop {
     grid-column: 1 / 4; grid-row: 1 / 2;
     font-size: 3vmin;
 }
 
-#gameSpeedContainer .optionButton {
+.optionButton {
     cursor: pointer;
     font-size: 2vmin;
 }
@@ -73,8 +79,23 @@ button {
 #fast {grid-column: 2 / 3; grid-row: 2 / 3;}
 #ultra {grid-column: 3 / 4; grid-row: 2 / 3;}
 
+#enemyAITop {
+    grid-column: 1 / 4; grid-row: 1 / 2;
+    font-size: 3vmin;
+}
+
+#enemyAIContainer {
+    height: 10%;
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: 50% fit-content(1%);
+    margin: auto;
+}
+
+#random {grid-column: 1 / 2; grid-row: 2 / 3;}
+#smart {grid-column: 2 / 3; grid-row: 2 / 3;}
+
 #volumeContainer {
-    width: 75%;
     height: 10%;
     display: grid;
     grid-template-columns: 100%;
@@ -151,6 +172,28 @@ button {
     cursor: pointer;
     outline: 1px solid black;
 }
+
+#scoreTop {
+    font-size: 3vmin;
+}
+
+#scoreTable {
+    border-collapse: collapse;
+    font-size: 2vmin;
+    margin: 0;
+    outline: 0;
+}
+
+#scoreTable tr {
+    outline: 0;
+}
+
+#scoreTable th {
+    text-align: left;
+    font-weight: normal;
+    outline: 0;
+}
+
                                     /* Party List Components */
 #partyList {
     width: 25%;
