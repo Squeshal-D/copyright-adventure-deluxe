@@ -958,7 +958,7 @@ function Herobrine() {
 
     this.attack1 = function(user, target) {
         if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
-        if (subMove == 0) {
+        if (user.subMove == 0) {
             if (user.house) {
                 return typeText(`${user.name} spawned a creeper, but ${target.name} was safe inside the house!`, true);
             }
@@ -975,7 +975,7 @@ function Herobrine() {
 
     this.attack2 = function(user, target) {
         if (!smartEnemies) user.subMove = Math.floor(2 * Math.random());
-        if (subMove == 0) {
+        if (user.subMove == 0) {
             for (let i = 0; i < party.length; i++) {
                 party[i].changehp(-4);
             }
