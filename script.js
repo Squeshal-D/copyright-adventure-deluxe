@@ -55,7 +55,7 @@ function Character() {
     this.quest = "";
     this.questPicture = "icons/cad icon.png";
     this.entrance = "";
-    this.picture = "characterPictures/empty character.png";
+    this.picture = "characterPictures/player.png";
     this.maxhp = 50;
     this.hp = 50;
     this.displayhp = 50;
@@ -149,6 +149,7 @@ function Blart() {
     this.quest = "Take a trip to the mall.";
     this.entrance = "Many of the people in the mall don't seem to be positively responding to you trying to pick a fight."
     + " It's no wonder you've been reported. Then you see him. \"I swore an oath to protect this mall.\"";
+    this.picture = "characterPictures/blart.png";
     this.maxhp = 80;
 
     this.move1name = "Segway Slam";
@@ -215,6 +216,7 @@ function Wick() {
     this.quest = "Hire an assassin to fight you.";
     this.entrance = "You pick up the phone and dial 1-800-KILL. \"Give me one of your finest hitmen. What? Who should their target be? Me.\""
     + " Within seconds, an assassin does a cool combat roll toward you. \"I've come for everything they said I couldn't have, even you.\"";
+    this.picture = "characterPictures/wick.png";
     this.maxhp = 60;
 
     this.move1name = "Pencil Shank";
@@ -987,13 +989,19 @@ function Herobrine() {
             let victim = party[Math.floor(Math.random() * party.length)];
 
             if (victim == target) {
-                return typeText(`${target.name} resisted the influence!`, true);
+                let resistMessage = `${target.name} resisted the influence!`;
+                timeouts.push(setTimeout(typeText, messageTime, resistMessage, true));
+                return messageTime + getTypeTextTime(`${target.name} resisted the influence!`);
             }
             else if (target.id == RAMSAY_ID) { // Can't use Ramsay 'Gordonmet'
-                timeouts.push(setTimeout(damageAnimation, target.attack1(target, victim), target, user, false));
+                timeouts.push(setTimeout(function() { 
+                    timeouts.push(setTimeout(damageAnimation, target.attack1(target, victim), target, user, false));
+                }, messageTime));
             }
             else if (smartEnemies && target.charging == 0) {
-                timeouts.push(setTimeout(damageAnimation, target.smartAttack(target, victim), target, user, false));
+                timeouts.push(setTimeout(function() { 
+                    timeouts.push(setTimeout(damageAnimation, target.smartAttack(target, victim), target, user, false));
+                }, messageTime));
             }
             else {
                 if (target.charging != 0) attackUsed = charging;
@@ -1010,7 +1018,7 @@ function Herobrine() {
     }
 
     this.smartAttack = function(user, target) {
-        if (target.hp <= 4 || (party.length > 4 || Math.floor(Math.random() * 5) == 0)) {
+        if (target.hp <= 4 || (party.length > 4 && Math.floor(Math.random() * 5) == 0)) {
             user.subMove = 0;
             return this.attack2(user, target);
         }
@@ -1156,7 +1164,7 @@ function Sans() {
             user.subMove = 1;
             return this.attack1(user, target);
         }
-        else if (partySwapDisabled && !snapped) {
+        else if (partySwapDisabled && !user.snapped) {
             user.subMove = 0;
             return this.attack1(user, target);
         }
@@ -1457,7 +1465,7 @@ function stopPlaySound(sound) {
 }
 
 function turnMultiplier() {
-    return 2 * (0.99 ** turns);
+    return 1 + (0.99 ** turns);
 }
 
 function smartMultiplier() {
