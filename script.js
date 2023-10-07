@@ -847,6 +847,7 @@ function Thanos() {
     this.entrance = "The Powerful One rolls up to you in a purple truck and does a few donuts to demonstrate his power. "
         + "He steps out, wearing a bracelet so large it even "
         + "covers his whole hand. \"I once destroyed half the universe, and now I will destroy all of you.\"";
+    this.picture = "characterPictures/thanos.png";
     this.maxhp = 200;
 
     this.boss = true;
@@ -952,6 +953,7 @@ function Herobrine() {
     this.quest = "Fight the Chaotic One.";
     this.entrance = "You lay eyes on the Chaotic One, but it seems that the second you focus your gaze upon them, they are gone. " 
         + "Someone says, \"He's right behind me, isn't he?\" After relieving the tension, everyone turns around.";
+    this.picture = "characterPictures/herobrine.png";
     this.maxhp = 200;
 
     this.boss = true;
@@ -1055,6 +1057,7 @@ function Sans() {
     this.description = "Silly Skeleton";
     this.quest = "Fight the Dead One.";
     this.entrance = "You go to fight the Dead One and he says, \"e e e e e e e e e e e e e e.\"";
+    this.picture = "characterPictures/sans.png";
     this.maxhp = 1;
 
     this.dodgesLeft = 8;
@@ -1192,6 +1195,7 @@ function HitSat() {
     this.description = "Worst Guy Ever Made";
     this.quest = "The Final Battle.";
     this.entrance = "";
+    this.picture = "characterPictures/hitsat.png";
     this.maxhp = 300;
 
     this.boss = true;
