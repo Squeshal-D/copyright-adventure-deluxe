@@ -55,7 +55,7 @@ function Character() {
     this.quest = "";
     this.questPicture = "icons/cad icon.png";
     this.entrance = "";
-    this.picture = "characterPictures/empty character.png";
+    this.picture = "characterPictures/player.png";
     this.maxhp = 50;
     this.hp = 50;
     this.displayhp = 50;
@@ -149,6 +149,7 @@ function Blart() {
     this.quest = "Take a trip to the mall.";
     this.entrance = "Many of the people in the mall don't seem to be positively responding to you trying to pick a fight."
     + " It's no wonder you've been reported. Then you see him. \"I swore an oath to protect this mall.\"";
+    this.picture = "characterPictures/blart.png";
     this.maxhp = 80;
 
     this.move1name = "Segway Slam";
@@ -215,6 +216,7 @@ function Wick() {
     this.quest = "Hire an assassin to fight you.";
     this.entrance = "You pick up the phone and dial 1-800-KILL. \"Give me one of your finest hitmen. What? Who should their target be? Me.\""
     + " Within seconds, an assassin does a cool combat roll toward you. \"I've come for everything they said I couldn't have, even you.\"";
+    this.picture = "characterPictures/wick.png";
     this.maxhp = 60;
 
     this.move1name = "Pencil Shank";
@@ -291,6 +293,7 @@ function Derrek() {
     this.entrance = "You go up to Derrek's house and knock on the door. Derrek's mom answers the door. She is very nice, and you ask her if Derrek is home."
         + " She invites you in and gives you some hot cocoa. You are rudely interrupted by Derrek, though. You put down the cocoa and tell Derrek's mom, "
         + " \"Sorry, but I'm going to have to kick your son's bootay.\"";
+    this.picture = "characterPictures/derrek.png";
     this.maxhp = 60;
 
     this.move1name = "Baseball Smash";
@@ -351,6 +354,7 @@ function Bowers() {
     this.questPicture = "places/cvchs.png";
     this.entrance = "You've arrived in the senior lot. Something isn't right. The gate is closed. You look at the time."
     + " Would anyone be willing to fight at 8:01? You turn around when, \"HEY! I've caught you!\"";
+    this.picture = "characterPictures/bowers.png";
     this.maxhp = 50;
 
     this.move1name = "Ambush";
@@ -417,6 +421,7 @@ function Chief() {
     this.questPicture = "places/space.png";
     this.entrance = "Hijacking a space vessel would surely cause the government to send special forces to stop you, and they do!"
     + " As soon as the armored warrior approaches you, he informs you that what you are doing is 'illegal' and that he needs a weapon.";
+    this.picture = "characterPictures/chief.png";
     this.maxhp = 100;
 
     this.move1name = "Assault Rifle";
@@ -488,6 +493,7 @@ function Lennie() {
     this.questPicture = "places/farm.png";
     this.entrance = "The huge barn door slowly opens and you peek inside. By the light through the door you can see the figure of a large man"
     + " petting a small mouse. \"You're lookin' pretty soft.\" He drops the lifeless rodent and lumbers toward you.";
+    this.picture = "characterPictures/lennie.png";
     this.maxhp = 80;
 
     this.move1name = "Hair Pull";
@@ -540,6 +546,7 @@ function Shrek() {
     this.questPicture = "places/swamp.png";
     this.entrance = "Swamps are dangerous places. What makes this swamp even more dangerous, though, is that it is HIS swamp."
     + " \"Oh hello there! Shrek here, and I'm ticked off!\"";
+    this.picture = "characterPictures/shrek.png";
     this.maxhp = 80;
 
     this.move1name = "Shrek Superslam";
@@ -608,6 +615,7 @@ function Washington() {
     this.entrance = "You get past securty like a watermelon knife going through a stick of butter that has been in the oven for 5 hours."
     + " You're expecting to see Trump aren't you? That would be too unoriginal, even for Copyright Adventure Deluxe."
     + " \"What have they done to my country? Look at this debt!\"";
+    this.picture = "characterPictures/washington.png";
     this.maxhp = 50;
 
     this.move1name = "Cherry Chop";
@@ -714,6 +722,7 @@ function Ramsay() {
     this.quest = "Enter the kitchen.";
     this.entrance = "You're feeling a little hungry, so you take a trip to the local kitchen. Using the equipment available, you make a PB&J."
     + " A man dressed in white approaches as you chomp away. \"Do you have any idea where you are? You're in Hell's Kitchen!\"";
+    this.picture = "characterPictures/ramsay.png";
     this.maxhp = 50;
 
     this.move1name = "Pan Slam";
@@ -838,6 +847,7 @@ function Thanos() {
     this.entrance = "The Powerful One rolls up to you in a purple truck and does a few donuts to demonstrate his power. "
         + "He steps out, wearing a bracelet so large it even "
         + "covers his whole hand. \"I once destroyed half the universe, and now I will destroy all of you.\"";
+    this.picture = "characterPictures/thanos.png";
     this.maxhp = 200;
 
     this.boss = true;
@@ -943,6 +953,7 @@ function Herobrine() {
     this.quest = "Fight the Chaotic One.";
     this.entrance = "You lay eyes on the Chaotic One, but it seems that the second you focus your gaze upon them, they are gone. " 
         + "Someone says, \"He's right behind me, isn't he?\" After relieving the tension, everyone turns around.";
+    this.picture = "characterPictures/herobrine.png";
     this.maxhp = 200;
 
     this.boss = true;
@@ -987,13 +998,19 @@ function Herobrine() {
             let victim = party[Math.floor(Math.random() * party.length)];
 
             if (victim == target) {
-                return typeText(`${target.name} resisted the influence!`, true);
+                let resistMessage = `${target.name} resisted the influence!`;
+                timeouts.push(setTimeout(typeText, messageTime, resistMessage, true));
+                return messageTime + getTypeTextTime(`${target.name} resisted the influence!`);
             }
             else if (target.id == RAMSAY_ID) { // Can't use Ramsay 'Gordonmet'
-                timeouts.push(setTimeout(damageAnimation, target.attack1(target, victim), target, user, false));
+                timeouts.push(setTimeout(function() { 
+                    timeouts.push(setTimeout(damageAnimation, target.attack1(target, victim), target, user, false));
+                }, messageTime));
             }
             else if (smartEnemies && target.charging == 0) {
-                timeouts.push(setTimeout(damageAnimation, target.smartAttack(target, victim), target, user, false));
+                timeouts.push(setTimeout(function() { 
+                    timeouts.push(setTimeout(damageAnimation, target.smartAttack(target, victim), target, user, false));
+                }, messageTime));
             }
             else {
                 if (target.charging != 0) attackUsed = charging;
@@ -1010,7 +1027,7 @@ function Herobrine() {
     }
 
     this.smartAttack = function(user, target) {
-        if (target.hp <= 4 || (party.length > 4 || Math.floor(Math.random() * 5) == 0)) {
+        if (target.hp <= 4 || (party.length > 4 && Math.floor(Math.random() * 5) == 0)) {
             user.subMove = 0;
             return this.attack2(user, target);
         }
@@ -1040,6 +1057,7 @@ function Sans() {
     this.description = "Silly Skeleton";
     this.quest = "Fight the Dead One.";
     this.entrance = "You go to fight the Dead One and he says, \"e e e e e e e e e e e e e e.\"";
+    this.picture = "characterPictures/sans.png";
     this.maxhp = 1;
 
     this.dodgesLeft = 8;
@@ -1156,7 +1174,7 @@ function Sans() {
             user.subMove = 1;
             return this.attack1(user, target);
         }
-        else if (partySwapDisabled && !snapped) {
+        else if (partySwapDisabled && !user.snapped) {
             user.subMove = 0;
             return this.attack1(user, target);
         }
@@ -1177,6 +1195,7 @@ function HitSat() {
     this.description = "Worst Guy Ever Made";
     this.quest = "The Final Battle.";
     this.entrance = "";
+    this.picture = "characterPictures/hitsat.png";
     this.maxhp = 300;
 
     this.boss = true;
@@ -1434,8 +1453,8 @@ function addAllEnemiesToPool() {
     
     const hitsat = new HitSat(); hitsat.refresh(); finalBoss = hitsat;
 
-    // party = fightPool.slice(); bowersStatus = 1;
-    // fightPool = [];
+    party = fightPool.slice(); bowersStatus = 1;
+    fightPool = [];
     // minibossPool = [];
 }
 
@@ -1457,7 +1476,7 @@ function stopPlaySound(sound) {
 }
 
 function turnMultiplier() {
-    return 2 * (0.99 ** turns);
+    return 1 + (0.99 ** turns);
 }
 
 function smartMultiplier() {
