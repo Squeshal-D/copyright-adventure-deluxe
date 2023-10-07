@@ -1453,8 +1453,8 @@ function addAllEnemiesToPool() {
     
     const hitsat = new HitSat(); hitsat.refresh(); finalBoss = hitsat;
 
-    party = fightPool.slice(); bowersStatus = 1;
-    fightPool = [];
+    // party = fightPool.slice(); bowersStatus = 1;
+    // fightPool = [];
     // minibossPool = [];
 }
 
