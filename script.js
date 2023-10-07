@@ -293,6 +293,7 @@ function Derrek() {
     this.entrance = "You go up to Derrek's house and knock on the door. Derrek's mom answers the door. She is very nice, and you ask her if Derrek is home."
         + " She invites you in and gives you some hot cocoa. You are rudely interrupted by Derrek, though. You put down the cocoa and tell Derrek's mom, "
         + " \"Sorry, but I'm going to have to kick your son's bootay.\"";
+    this.picture = "characterPictures/derrek.png";
     this.maxhp = 60;
 
     this.move1name = "Baseball Smash";
@@ -353,6 +354,7 @@ function Bowers() {
     this.questPicture = "places/cvchs.png";
     this.entrance = "You've arrived in the senior lot. Something isn't right. The gate is closed. You look at the time."
     + " Would anyone be willing to fight at 8:01? You turn around when, \"HEY! I've caught you!\"";
+    this.picture = "characterPictures/bowers.png";
     this.maxhp = 50;
 
     this.move1name = "Ambush";
@@ -419,6 +421,7 @@ function Chief() {
     this.questPicture = "places/space.png";
     this.entrance = "Hijacking a space vessel would surely cause the government to send special forces to stop you, and they do!"
     + " As soon as the armored warrior approaches you, he informs you that what you are doing is 'illegal' and that he needs a weapon.";
+    this.picture = "characterPictures/chief.png";
     this.maxhp = 100;
 
     this.move1name = "Assault Rifle";
@@ -490,6 +493,7 @@ function Lennie() {
     this.questPicture = "places/farm.png";
     this.entrance = "The huge barn door slowly opens and you peek inside. By the light through the door you can see the figure of a large man"
     + " petting a small mouse. \"You're lookin' pretty soft.\" He drops the lifeless rodent and lumbers toward you.";
+    this.picture = "characterPictures/lennie.png";
     this.maxhp = 80;
 
     this.move1name = "Hair Pull";
@@ -542,6 +546,7 @@ function Shrek() {
     this.questPicture = "places/swamp.png";
     this.entrance = "Swamps are dangerous places. What makes this swamp even more dangerous, though, is that it is HIS swamp."
     + " \"Oh hello there! Shrek here, and I'm ticked off!\"";
+    this.picture = "characterPictures/shrek.png";
     this.maxhp = 80;
 
     this.move1name = "Shrek Superslam";
@@ -610,6 +615,7 @@ function Washington() {
     this.entrance = "You get past securty like a watermelon knife going through a stick of butter that has been in the oven for 5 hours."
     + " You're expecting to see Trump aren't you? That would be too unoriginal, even for Copyright Adventure Deluxe."
     + " \"What have they done to my country? Look at this debt!\"";
+    this.picture = "characterPictures/washington.png";
     this.maxhp = 50;
 
     this.move1name = "Cherry Chop";
@@ -716,6 +722,7 @@ function Ramsay() {
     this.quest = "Enter the kitchen.";
     this.entrance = "You're feeling a little hungry, so you take a trip to the local kitchen. Using the equipment available, you make a PB&J."
     + " A man dressed in white approaches as you chomp away. \"Do you have any idea where you are? You're in Hell's Kitchen!\"";
+    this.picture = "characterPictures/ramsay.png";
     this.maxhp = 50;
 
     this.move1name = "Pan Slam";
@@ -1442,8 +1449,8 @@ function addAllEnemiesToPool() {
     
     const hitsat = new HitSat(); hitsat.refresh(); finalBoss = hitsat;
 
-    // party = fightPool.slice(); bowersStatus = 1;
-    // fightPool = [];
+    party = fightPool.slice(); bowersStatus = 1;
+    fightPool = [];
     // minibossPool = [];
 }
 
