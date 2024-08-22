@@ -214,6 +214,7 @@ function Wick() {
     this.name = "John Wick";
     this.description = "Character from Fortnite";
     this.quest = "Hire an assassin to fight you.";
+    this.questPicture = "places/assassin.png";
     this.entrance = "You pick up the phone and dial 1-800-KILL. \"Give me one of your finest hitmen. What? Who should their target be? Me.\""
     + " Within seconds, an assassin does a cool combat roll toward you. \"I've come for everything they said I couldn't have, even you.\"";
     this.picture = "characterPictures/wick.png";
@@ -290,6 +291,7 @@ function Derrek() {
     this.name = "Derrek";
     this.description = "Sharks Fan";
     this.quest = "Go to Derrek's house.";
+    this.questPicture = "places/house.png";
     this.entrance = "You go up to Derrek's house and knock on the door. Derrek's mom answers the door. She is very nice, and you ask her if Derrek is home."
         + " She invites you in and gives you some hot cocoa. You are rudely interrupted by Derrek, though. You put down the cocoa and tell Derrek's mom, "
         + " \"Sorry, but I'm going to have to kick your son's bootay.\"";
